@@ -1,6 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { ShopCard } from '@/components/shops/shop-card';
+import { LanguageProvider } from '@/components/language-provider';
 import type { ShopItem } from '@/types';
 
 const mockShop: ShopItem = {
@@ -31,7 +32,11 @@ const mockShop: ShopItem = {
 
 describe('ShopCard', () => {
   it('renders shop name, rating, city, priority badge, distance, and tags', () => {
-    render(<ShopCard shop={mockShop} />);
+    render(
+      <LanguageProvider>
+        <ShopCard shop={mockShop} />
+      </LanguageProvider>
+    );
 
     expect(screen.getByText('Elixir Bunn Coffee Roasters')).toBeInTheDocument();
     expect(screen.getByText('Your City')).toBeInTheDocument();
@@ -45,10 +50,14 @@ describe('ShopCard', () => {
 
   it('calls onToggleFavorite when heart button is clicked', () => {
     const onToggleFavorite = vi.fn();
-    render(<ShopCard shop={mockShop} onToggleFavorite={onToggleFavorite} />);
+    render(
+      <LanguageProvider>
+        <ShopCard shop={mockShop} onToggleFavorite={onToggleFavorite} />
+      </LanguageProvider>
+    );
 
     const favButton = screen.getByRole('button', {
-      name: /Save Elixir Bunn Coffee Roasters to favorites/i,
+      name: /Save to favorites/i,
     });
     fireEvent.click(favButton);
     expect(onToggleFavorite).toHaveBeenCalledWith('shop_1');

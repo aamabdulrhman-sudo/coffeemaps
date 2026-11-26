@@ -2,10 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
-export async function GET(
-  _request: Request,
-  context: { params: Promise<{ id: string }> }
-) {
+export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await context.params;
     const session = await auth();
@@ -16,6 +13,7 @@ export async function GET(
       },
       include: {
         tags: true,
+        loyaltyProgram: true,
         photos: {
           orderBy: { createdAt: 'desc' },
         },
@@ -53,10 +51,23 @@ export async function GET(
       isFavorited = Boolean(fav);
     }
 
+    let loyaltyCard = null;
+    if (shop.loyaltyProgram && session?.user?.id) {
+      loyaltyCard = await prisma.loyaltyCard.findUnique({
+        where: {
+          userId_programId: {
+            userId: session.user.id,
+            programId: shop.loyaltyProgram.id,
+          },
+        },
+      });
+    }
+
     return NextResponse.json({
       shop: {
         ...shop,
         isFavorited,
+        loyaltyCard,
       },
     });
   } catch (error) {

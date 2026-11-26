@@ -127,9 +127,7 @@ export async function GET(request: Request) {
     });
 
     if (hasLocation && radiusKm !== undefined) {
-      enriched = enriched.filter(
-        (shop) => shop.distanceKm !== null && shop.distanceKm <= radiusKm
-      );
+      enriched = enriched.filter((shop) => shop.distanceKm !== null && shop.distanceKm <= radiusKm);
     }
 
     if (hasLocation && sort === 'nearest') {
@@ -162,6 +160,18 @@ export async function POST(request: Request) {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+
+    // Only platform admins can add coffee shops
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { role: true },
+    });
+    if (user?.role !== 'ADMIN') {
+      return NextResponse.json(
+        { error: 'Only platform admins can add coffee shops' },
+        { status: 403 }
+      );
     }
 
     const body = await request.json();

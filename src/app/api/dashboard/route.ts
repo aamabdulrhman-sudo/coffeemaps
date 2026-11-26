@@ -12,7 +12,7 @@ export async function GET() {
 
     const userId = session.user.id;
 
-    const [favorites, reviews, photoCount, badges] = await Promise.all([
+    const [favorites, reviews, photoCount, badges, loyaltyCards, followCounts] = await Promise.all([
       prisma.favorite.findMany({
         where: { userId },
         include: { shop: { include: { tags: true } } },
@@ -33,6 +33,23 @@ export async function GET() {
       }),
       prisma.photo.count({ where: { userId } }),
       syncUserBadges(userId),
+      prisma.loyaltyCard.findMany({
+        where: { userId },
+        include: {
+          program: {
+            include: {
+              shop: { select: { id: true, name: true, slug: true, imageUrl: true, city: true } },
+            },
+          },
+        },
+        orderBy: { updatedAt: 'desc' },
+      }),
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          _count: { select: { followers: true, following: true } },
+        },
+      }),
     ]);
 
     const citySet = new Set<string>();
@@ -56,11 +73,14 @@ export async function GET() {
         photoCount,
         averageRatingGiven,
         citiesVisited: citySet.size,
+        followers: followCounts?._count.followers ?? 0,
+        following: followCounts?._count.following ?? 0,
       },
       badges,
       recentReviews: reviews.slice(0, 6),
       favorites: favorites.slice(0, 6).map((f) => ({ ...f.shop, isFavorited: true })),
       ratingDistribution,
+      loyaltyCards,
     });
   } catch (error) {
     console.error('GET /api/dashboard error:', error);

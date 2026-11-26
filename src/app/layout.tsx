@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Plus_Jakarta_Sans } from 'next/font/google';
+import { Plus_Jakarta_Sans, IBM_Plex_Sans_Arabic } from 'next/font/google';
 import './globals.css';
 import { Providers } from '@/components/providers';
 import { Navbar } from '@/components/layout/navbar';
@@ -8,6 +8,12 @@ import { getBaseUrl } from '@/lib/utils';
 const jakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
   variable: '--font-sans',
+});
+
+const arabic = IBM_Plex_Sans_Arabic({
+  subsets: ['arabic'],
+  weight: ['300', '400', '500', '600', '700'],
+  variable: '--font-arabic',
 });
 
 export const metadata: Metadata = {
@@ -61,8 +67,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${jakarta.className} min-h-screen bg-background text-foreground`}>
+    <html lang="en" dir="ltr" suppressHydrationWarning>
+      <body
+        className={`${jakarta.variable} ${arabic.variable} min-h-screen bg-background text-foreground`}
+      >
         <Providers>
           <div className="flex min-h-screen flex-col">
             <Navbar />

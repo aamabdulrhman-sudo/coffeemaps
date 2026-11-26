@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { BadgePill } from '@/components/badges/badge-pill';
 import { EmptyState } from '@/components/states/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useI18n } from '@/components/language-provider';
 import type { UserBadgeItem } from '@/types';
 
 interface ProfileResponse {
@@ -31,6 +32,7 @@ interface ProfileResponse {
 
 export default function ProfilePage() {
   const { data: session, status, update } = useSession();
+  const { t } = useI18n();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [name, setName] = useState('');
@@ -76,12 +78,12 @@ export default function ProfilePage() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Failed to update profile');
+      if (!res.ok) throw new Error(data.error ?? t.profileSaveFailed);
 
       await update({ name: data.user.name, image: data.user.image });
-      toast.success('Profile updated');
+      toast.success(t.profileUpdated);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Unable to save profile');
+      toast.error(err instanceof Error ? err.message : t.profileSaveFailed);
     } finally {
       setSaving(false);
     }
@@ -101,12 +103,12 @@ export default function ProfilePage() {
       <main className="mx-auto max-w-3xl px-4 py-16">
         <EmptyState
           icon={UserIcon}
-          title="Sign in to view your profile"
-          description="Customize your CoffeeMap profile, home city, and showcase your badges."
+          title={t.profileSignInTitle}
+          description={t.profileSignInDesc}
         />
         <div className="mt-4 flex justify-center">
           <Button asChild>
-            <Link href="/auth/signin">Sign in</Link>
+            <Link href="/auth/signin">{t.signIn}</Link>
           </Button>
         </div>
       </main>
@@ -122,7 +124,7 @@ export default function ProfilePage() {
             <AvatarFallback>{name?.slice(0, 2).toUpperCase() || 'CM'}</AvatarFallback>
           </Avatar>
           <div>
-            <CardTitle>{name || 'Coffee Explorer'}</CardTitle>
+            <CardTitle>{name || t.profileCoffeeExplorer}</CardTitle>
             <CardDescription>{email}</CardDescription>
           </div>
         </CardHeader>
@@ -130,13 +132,13 @@ export default function ProfilePage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Profile Settings</CardTitle>
-          <CardDescription>Update how you appear on CoffeeMap reviews.</CardDescription>
+          <CardTitle>{t.profileTitle}</CardTitle>
+          <CardDescription>{t.profileDesc}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSave} className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="profile-name">Display Name</Label>
+              <Label htmlFor="profile-name">{t.profileName}</Label>
               <Input
                 id="profile-name"
                 value={name}
@@ -146,17 +148,17 @@ export default function ProfilePage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="profile-city">Home City</Label>
+              <Label htmlFor="profile-city">{t.profileHomeCity}</Label>
               <Input
                 id="profile-city"
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
-                placeholder="e.g., Riyadh, Dubai, Tokyo"
+                placeholder={t.profileHomeCityPlaceholder}
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="profile-image">Avatar URL</Label>
+              <Label htmlFor="profile-image">{t.profileAvatar}</Label>
               <Input
                 id="profile-image"
                 type="url"
@@ -167,18 +169,18 @@ export default function ProfilePage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="profile-bio">Bio</Label>
+              <Label htmlFor="profile-bio">{t.profileBio}</Label>
               <Textarea
                 id="profile-bio"
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
-                placeholder="Favorite roast style, go-to brew method..."
+                placeholder={t.profileBioPlaceholder}
                 maxLength={300}
               />
             </div>
 
             <Button type="submit" disabled={saving}>
-              {saving ? 'Saving...' : 'Save changes'}
+              {saving ? t.saving : t.saveChanges}
             </Button>
           </form>
         </CardContent>
@@ -188,14 +190,12 @@ export default function ProfilePage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Award className="h-4 w-4 text-primary" />
-            Earned Badges
+            {t.profileBadges}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {badges.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No badges earned yet. Leave reviews and save favorite cafes to unlock badges!
-            </p>
+            <p className="text-sm text-muted-foreground">{t.profileNoBadges}</p>
           ) : (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {badges.map((badge) => (

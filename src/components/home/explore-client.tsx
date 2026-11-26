@@ -12,8 +12,10 @@ import { MapWrapper } from '@/components/map/map-wrapper';
 import { ShopGridSkeleton } from '@/components/states/loading-skeletons';
 import { EmptyState } from '@/components/states/empty-state';
 import { ErrorState } from '@/components/states/error-state';
+import { AdBanners } from '@/components/ads/ad-banner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useI18n } from '@/components/language-provider';
 
 const CITY_STORAGE_KEY = 'coffeemap_preferred_city';
 const MODE_STORAGE_KEY = 'coffeemap_city_mode';
@@ -27,6 +29,7 @@ const INITIAL_FILTERS: ShopFilterParams = {
 
 export function ExploreClient() {
   const { status: sessionStatus } = useSession();
+  const { t } = useI18n();
   const [filters, setFilters] = useState<ShopFilterParams>(INITIAL_FILTERS);
   const [selectedCity, setSelectedCity] = useState<string>('all');
   const [cityMode, setCityMode] = useState<CityMode>('priority');
@@ -44,29 +47,34 @@ export function ExploreClient() {
     return () => clearTimeout(timer);
   }, [filters.q]);
 
-  const detectFromCoords = useCallback(async (lat: number, lng: number, silent = false) => {
-    setUserLocation({ lat, lng });
-    setFilters((prev) => ({ ...prev, sort: 'nearest' }));
+  const detectFromCoords = useCallback(
+    async (lat: number, lng: number, silent = false) => {
+      setUserLocation({ lat, lng });
+      setFilters((prev) => ({ ...prev, sort: 'nearest' }));
 
-    try {
-      const res = await fetch(`/api/location/city?lat=${lat}&lng=${lng}`);
-      const data = (await res.json()) as { city?: string | null };
-      if (data.city) {
-        setSelectedCity(data.city);
-        setCitySource('gps');
-        window.localStorage.setItem(CITY_STORAGE_KEY, data.city);
-        if (!silent) {
-          toast.success(`Detected city: ${data.city} — prioritizing cafes in ${data.city}`);
+      try {
+        const res = await fetch(`/api/location/city?lat=${lat}&lng=${lng}`);
+        const data = (await res.json()) as { city?: string | null };
+        if (data.city) {
+          setSelectedCity(data.city);
+          setCitySource('gps');
+          window.localStorage.setItem(CITY_STORAGE_KEY, data.city);
+          if (!silent) {
+            toast.success(
+              `${t.exploreDetectedCity}: ${data.city} — ${t.explorePrioritizing} ${data.city}`
+            );
+          }
+        } else if (!silent) {
+          toast.success(t.exploreLocationDetected);
         }
-      } else if (!silent) {
-        toast.success('Location detected — showing nearest coffee shops');
+      } catch {
+        if (!silent) {
+          toast.success(t.exploreLocationDetected);
+        }
       }
-    } catch {
-      if (!silent) {
-        toast.success('Location detected — showing nearest coffee shops');
-      }
-    }
-  }, []);
+    },
+    [t]
+  );
 
   // Restore manual/saved city preference, or auto-detect if permission granted / profile city set
   useEffect(() => {
@@ -142,8 +150,8 @@ export function ExploreClient() {
       window.localStorage.setItem(CITY_STORAGE_KEY, city);
       toast.success(
         cityMode === 'priority'
-          ? `Prioritizing coffee shops in ${city}`
-          : `Showing coffee shops in ${city}`
+          ? `${t.explorePrioritizingCity} ${city}`
+          : `${t.exploreShowingCity} ${city}`
       );
     }
   }
@@ -155,7 +163,7 @@ export function ExploreClient() {
 
   function handleLocateMe() {
     if (!navigator.geolocation) {
-      toast.error('Geolocation is not supported by your browser');
+      toast.error(t.exploreGeoUnsupported);
       return;
     }
 
@@ -167,7 +175,7 @@ export function ExploreClient() {
       },
       () => {
         setLocating(false);
-        toast.error('Unable to retrieve your location. Check browser permissions or pick a city manually.');
+        toast.error(t.exploreGeoError);
       },
       { enableHighAccuracy: true, timeout: 8000 }
     );
@@ -197,7 +205,8 @@ export function ExploreClient() {
   }
 
   const shops = useMemo(() => data?.shops ?? [], [data?.shops]);
-  const activePriorityCity = data?.activePriorityCity ?? (selectedCity !== 'all' ? selectedCity : null);
+  const activePriorityCity =
+    data?.activePriorityCity ?? (selectedCity !== 'all' ? selectedCity : null);
   const priorityShops = useMemo(() => shops.filter((s) => s.isPriorityCity), [shops]);
   const otherShops = useMemo(() => shops.filter((s) => !s.isPriorityCity), [shops]);
 
@@ -228,7 +237,7 @@ export function ExploreClient() {
       {/* Mobile View Switcher */}
       <div className="flex items-center justify-between border-b bg-background px-4 py-2 lg:hidden">
         <span className="text-xs font-medium text-muted-foreground">
-          {shops.length} coffee {shops.length === 1 ? 'shop' : 'shops'}
+          {shops.length} {t.exploreCount}
         </span>
         <div className="flex gap-1">
           <Button
@@ -238,7 +247,7 @@ export function ExploreClient() {
             className="h-8 gap-1 text-xs"
           >
             <List className="h-3.5 w-3.5" />
-            List
+            {t.exploreList}
           </Button>
           <Button
             size="sm"
@@ -247,7 +256,7 @@ export function ExploreClient() {
             className="h-8 gap-1 text-xs"
           >
             <MapIcon className="h-3.5 w-3.5" />
-            Map
+            {t.exploreMap}
           </Button>
         </div>
       </div>
@@ -260,6 +269,11 @@ export function ExploreClient() {
             mobileView === 'map' ? 'hidden lg:block' : 'block'
           }`}
         >
+          {/* Ad Banners Carousel */}
+          <div className="mb-5">
+            <AdBanners />
+          </div>
+
           {/* Trending / Nearby Banner */}
           {trendingTop.length > 0 && !isLoading && (
             <div className="mb-5 rounded-2xl border bg-gradient-to-r from-coffee-50 via-background to-amber-50/60 p-4 dark:from-coffee-950/50 dark:via-background dark:to-amber-950/20">
@@ -268,21 +282,23 @@ export function ExploreClient() {
                   {activePriorityCity ? (
                     <>
                       <MapPin className="h-3.5 w-3.5" />
-                      Priority in {activePriorityCity}
+                      {t.explorePriorityIn} {activePriorityCity}
                     </>
                   ) : userLocation ? (
                     <>
                       <Sparkles className="h-3.5 w-3.5" />
-                      Suggested Nearby & Trending
+                      {t.exploreSuggestedNearby}
                     </>
                   ) : (
                     <>
                       <Flame className="h-3.5 w-3.5" />
-                      Trending Coffee Shops
+                      {t.exploreTrending}
                     </>
                   )}
                 </span>
-                <span className="text-xs text-muted-foreground">{shops.length} spots found</span>
+                <span className="text-xs text-muted-foreground">
+                  {shops.length} {t.exploreSpotsFound}
+                </span>
               </div>
               <div className="flex flex-wrap gap-2">
                 {trendingTop.map((shop) => (
@@ -303,15 +319,15 @@ export function ExploreClient() {
             <ShopGridSkeleton count={6} />
           ) : isError ? (
             <ErrorState
-              title="Could not load coffee shops"
-              message="Please verify your connection and try refreshing."
+              title={t.exploreLoadError}
+              message={t.exploreLoadErrorDesc}
               onRetry={() => refetch()}
             />
           ) : shops.length === 0 ? (
             <EmptyState
-              title="No coffee shops match your filters"
-              description="Try clearing a tag, switching from 'Only' to 'Priority' mode, or resetting filters."
-              actionLabel="Reset all filters"
+              title={t.exploreNoMatches}
+              description={t.exploreNoMatchesDesc}
+              actionLabel={t.exploreResetAll}
               onAction={handleReset}
             />
           ) : activePriorityCity && cityMode === 'priority' ? (
@@ -320,7 +336,7 @@ export function ExploreClient() {
                 <div className="mb-3 flex items-center justify-between">
                   <h2 className="flex items-center gap-1.5 text-sm font-semibold">
                     <MapPin className="h-4 w-4 text-primary" />
-                    In {activePriorityCity} ({priorityShops.length})
+                    {t.exploreInCity} {activePriorityCity} ({priorityShops.length})
                   </h2>
                 </div>
                 {priorityShops.length > 0 ? (
@@ -337,8 +353,7 @@ export function ExploreClient() {
                   </div>
                 ) : (
                   <p className="rounded-xl border border-dashed p-4 text-xs text-muted-foreground">
-                    No seeded coffee shops in {activePriorityCity} yet — showing nearest and
-                    trending cafes below.
+                    {t.exploreNoCityShops.replace('{city}', activePriorityCity)}
                   </p>
                 )}
               </div>
@@ -346,7 +361,7 @@ export function ExploreClient() {
               {otherShops.length > 0 && (
                 <div>
                   <h2 className="mb-3 text-sm font-semibold text-muted-foreground">
-                    Explore Other Cities ({otherShops.length})
+                    {t.exploreOtherCities} ({otherShops.length})
                   </h2>
                   <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                     {otherShops.map((shop) => (

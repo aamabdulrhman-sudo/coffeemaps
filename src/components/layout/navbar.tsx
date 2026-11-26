@@ -11,8 +11,11 @@ import {
   LayoutDashboard,
   LogOut,
   Moon,
+  ShieldCheck,
   Sun,
+  Users,
   User as UserIcon,
+  Languages,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -24,16 +27,21 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/components/language-provider';
 
 export function Navbar() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const { theme, setTheme } = useTheme();
+  const { t, locale, toggleLocale } = useI18n();
+
+  const isAdmin = session?.user?.role === 'ADMIN';
 
   const navItems = [
-    { href: '/', label: 'Explore Map', icon: Compass },
-    { href: '/favorites', label: 'Favorites', icon: Heart },
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/', label: t.navExplore, icon: Compass },
+    { href: '/community', label: t.navCommunity, icon: Users },
+    { href: '/favorites', label: t.navFavorites, icon: Heart },
+    { href: '/dashboard', label: t.navDashboard, icon: LayoutDashboard },
   ];
 
   const initials = session?.user?.name
@@ -75,13 +83,38 @@ export function Navbar() {
               </Link>
             );
           })}
+          {isAdmin && (
+            <Link
+              href="/admin"
+              className={cn(
+                'inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-medium transition-colors',
+                pathname.startsWith('/admin')
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+              )}
+            >
+              <ShieldCheck className="h-4 w-4" />
+              {t.navAdmin}
+            </Link>
+          )}
         </nav>
 
         <div className="flex items-center gap-2">
           <Button
             variant="ghost"
+            size="sm"
+            onClick={toggleLocale}
+            aria-label={t.language}
+            className="gap-1.5"
+          >
+            <Languages className="h-4 w-4" />
+            <span className="text-xs font-semibold">{locale === 'en' ? 'عربي' : 'EN'}</span>
+          </Button>
+
+          <Button
+            variant="ghost"
             size="icon"
-            aria-label="Toggle dark mode"
+            aria-label={t.toggleDarkMode}
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
           >
             <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
@@ -96,11 +129,14 @@ export function Navbar() {
                   className="flex items-center gap-2 rounded-full border p-1 pr-3 transition-shadow hover:shadow-sm"
                 >
                   <Avatar className="h-7 w-7">
-                    <AvatarImage src={session.user.image ?? undefined} alt={session.user.name ?? ''} />
+                    <AvatarImage
+                      src={session.user.image ?? undefined}
+                      alt={session.user.name ?? ''}
+                    />
                     <AvatarFallback>{initials || 'CM'}</AvatarFallback>
                   </Avatar>
                   <span className="hidden text-sm font-medium sm:inline">
-                    {session.user.name?.split(' ')[0] ?? 'Account'}
+                    {session.user.name?.split(' ')[0] ?? t.account}
                   </span>
                 </button>
               </DropdownMenuTrigger>
@@ -113,38 +149,52 @@ export function Navbar() {
                 <DropdownMenuItem asChild>
                   <Link href="/dashboard">
                     <LayoutDashboard className="h-4 w-4" />
-                    Dashboard
+                    {t.navDashboard}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/favorites">
                     <Heart className="h-4 w-4" />
-                    Favorites
+                    {t.navFavorites}
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/community">
+                    <Users className="h-4 w-4" />
+                    {t.navCommunity}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/profile">
                     <UserIcon className="h-4 w-4" />
-                    Profile
+                    {t.navProfile}
                   </Link>
                 </DropdownMenuItem>
+                {isAdmin && (
+                  <DropdownMenuItem asChild>
+                    <Link href="/admin">
+                      <ShieldCheck className="h-4 w-4" />
+                      {t.navAdmin}
+                    </Link>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => signOut({ callbackUrl: '/' })}
                   className="text-destructive focus:text-destructive"
                 >
                   <LogOut className="h-4 w-4" />
-                  Sign out
+                  {t.signOut}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="sm" asChild>
-                <Link href="/auth/signin">Sign in</Link>
+                <Link href="/auth/signin">{t.signIn}</Link>
               </Button>
               <Button size="sm" asChild>
-                <Link href="/auth/signup">Get started</Link>
+                <Link href="/auth/signup">{t.signUp}</Link>
               </Button>
             </div>
           )}

@@ -23,7 +23,11 @@ export const reviewCreateSchema = z.object({
     .trim()
     .min(5, 'Review must be at least 5 characters')
     .max(2000, 'Review cannot exceed 2000 characters'),
-  photoUrls: z.array(z.string().min(1)).max(5, 'Maximum 5 photos per review').optional().default([]),
+  photoUrls: z
+    .array(z.string().min(1))
+    .max(5, 'Maximum 5 photos per review')
+    .optional()
+    .default([]),
 });
 
 export const reviewUpdateSchema = z.object({
@@ -68,3 +72,39 @@ export const profileUpdateSchema = z.object({
   city: z.string().trim().max(80, 'City must be under 80 characters').optional().nullable(),
   image: z.string().url('Must be a valid URL').or(z.literal('')).optional().nullable(),
 });
+
+export const adBannerCreateSchema = z.object({
+  title: z.string().trim().min(2).max(120),
+  subtitle: z.string().trim().max(200).optional().nullable(),
+  imageUrl: z.string().url('Must be a valid image URL'),
+  linkUrl: z.string().url('Must be a valid URL').optional().nullable().or(z.literal('')),
+  shopId: z.string().optional().nullable(),
+  active: z.boolean().optional().default(true),
+  priority: z.coerce.number().int().min(0).max(1000).optional().default(0),
+});
+
+export const adBannerUpdateSchema = adBannerCreateSchema.partial();
+
+export const loyaltyProgramSchema = z.object({
+  shopId: z.string().min(1, 'Shop ID is required'),
+  stampsGoal: z.coerce.number().int().min(3, 'Minimum 3 stamps').max(30, 'Maximum 30 stamps'),
+  reward: z.string().trim().min(3, 'Reward description required').max(160),
+  active: z.boolean().optional().default(true),
+});
+
+export const loyaltyCheckInSchema = z.object({
+  shopId: z.string().min(1, 'Shop ID is required'),
+});
+
+export const adminSetupSchema = z.object({
+  name: z.string().trim().min(2).max(80),
+  email: z.string().trim().email('Please enter a valid email address').toLowerCase(),
+  password: z.string().min(8, 'Password must be at least 8 characters').max(100),
+  setupToken: z.string().min(1, 'Setup token is required'),
+});
+
+export const adminRoleUpdateSchema = z.object({
+  role: z.enum(['USER', 'ADMIN']),
+});
+
+export const adminShopUpdateSchema = shopCreateSchema.partial();

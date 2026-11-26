@@ -1,12 +1,14 @@
 import { Skeleton } from '@/components/ui/skeleton';
+import { useI18n } from '@/components/language-provider';
 
 export function MapSkeleton() {
+  const { t } = useI18n();
   return (
     <div className="relative h-full w-full overflow-hidden rounded-2xl border bg-muted/40">
       <Skeleton className="h-full w-full rounded-none" />
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="rounded-xl bg-background/80 px-4 py-2 text-sm font-medium shadow-sm backdrop-blur">
-          Loading interactive coffee map...
+          {t.exploreLoadingMap}
         </div>
       </div>
     </div>

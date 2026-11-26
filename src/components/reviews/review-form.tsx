@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/components/language-provider';
 
 interface ReviewFormProps {
   shopId: string;
@@ -23,6 +24,7 @@ interface ReviewFormProps {
 
 export function ReviewForm({ shopId, initialData, onSuccess, onCancel }: ReviewFormProps) {
   const isEdit = Boolean(initialData);
+  const { t } = useI18n();
   const [rating, setRating] = useState(initialData?.rating ?? 5);
   const [hoverRating, setHoverRating] = useState(0);
   const [title, setTitle] = useState(initialData?.title ?? '');
@@ -44,13 +46,13 @@ export function ReviewForm({ shopId, initialData, onSuccess, onCancel }: ReviewF
         formData.append('file', file);
         const res = await fetch('/api/upload', { method: 'POST', body: formData });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? 'Upload failed');
+        if (!res.ok) throw new Error(data.error ?? t.reviewUploadFailed);
         uploaded.push(data.url);
       }
       setPhotoUrls((prev) => [...prev, ...uploaded]);
-      toast.success('Photo uploaded');
+      toast.success(t.reviewPhotoUploaded);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to upload image');
+      toast.error(err instanceof Error ? err.message : t.reviewUploadFailed);
     } finally {
       setUploading(false);
       e.target.value = '';
@@ -62,7 +64,7 @@ export function ReviewForm({ shopId, initialData, onSuccess, onCancel }: ReviewF
     setError(null);
 
     if (comment.trim().length < 5) {
-      setError('Please write at least 5 characters for your review.');
+      setError(t.reviewMinChars);
       return;
     }
 
@@ -81,9 +83,9 @@ export function ReviewForm({ shopId, initialData, onSuccess, onCancel }: ReviewF
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Failed to save review');
+      if (!res.ok) throw new Error(data.error ?? t.shopAiFailed);
 
-      toast.success(isEdit ? 'Review updated' : 'Review published!');
+      toast.success(isEdit ? t.reviewUpdated : t.reviewPublished);
       if (!isEdit) {
         setTitle('');
         setComment('');
@@ -92,7 +94,7 @@ export function ReviewForm({ shopId, initialData, onSuccess, onCancel }: ReviewF
       }
       onSuccess();
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Could not submit review';
+      const msg = err instanceof Error ? err.message : t.shopAiFailed;
       setError(msg);
       toast.error(msg);
     } finally {
@@ -103,15 +105,15 @@ export function ReviewForm({ shopId, initialData, onSuccess, onCancel }: ReviewF
   return (
     <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border bg-card p-5">
       <div className="space-y-1.5">
-        <Label>Your Rating</Label>
-        <div className="flex items-center gap-1" role="radiogroup" aria-label="Rating">
+        <Label>{t.reviewYourRating}</Label>
+        <div className="flex items-center gap-1" role="radiogroup" aria-label={t.reviewYourRating}>
           {[1, 2, 3, 4, 5].map((star) => {
             const active = (hoverRating || rating) >= star;
             return (
               <button
                 key={star}
                 type="button"
-                aria-label={`Rate ${star} stars`}
+                aria-label={t.reviewRateStars.replace('{n}', String(star))}
                 onMouseEnter={() => setHoverRating(star)}
                 onMouseLeave={() => setHoverRating(0)}
                 onClick={() => setRating(star)}
@@ -131,30 +133,30 @@ export function ReviewForm({ shopId, initialData, onSuccess, onCancel }: ReviewF
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="review-title">Headline (optional)</Label>
+        <Label htmlFor="review-title">{t.reviewHeadline}</Label>
         <Input
           id="review-title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="e.g., Silky cortado and reliable WiFi"
+          placeholder={t.reviewHeadlinePlaceholder}
           maxLength={120}
         />
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="review-comment">Your Review</Label>
+        <Label htmlFor="review-comment">{t.reviewYourReview}</Label>
         <Textarea
           id="review-comment"
           value={comment}
           onChange={(e) => setComment(e.target.value)}
-          placeholder="Share details about the espresso, seating, WiFi speed, and atmosphere..."
+          placeholder={t.reviewCommentPlaceholder}
           required
         />
       </div>
 
       {!isEdit && (
         <div className="space-y-2">
-          <Label>Photos (optional, up to 5)</Label>
+          <Label>{t.reviewPhotos}</Label>
           <div className="flex flex-wrap items-center gap-3">
             {photoUrls.map((url) => (
               <div key={url} className="relative h-16 w-16 overflow-hidden rounded-xl border">
@@ -162,7 +164,7 @@ export function ReviewForm({ shopId, initialData, onSuccess, onCancel }: ReviewF
                 <button
                   type="button"
                   onClick={() => setPhotoUrls((prev) => prev.filter((item) => item !== url))}
-                  aria-label="Remove photo"
+                  aria-label={t.reviewRemovePhoto}
                   className="absolute right-1 top-1 rounded-full bg-black/70 p-0.5 text-white"
                 >
                   <X className="h-3 w-3" />
@@ -172,7 +174,7 @@ export function ReviewForm({ shopId, initialData, onSuccess, onCancel }: ReviewF
             {photoUrls.length < 5 && (
               <label className="flex h-16 cursor-pointer items-center gap-2 rounded-xl border border-dashed px-4 text-xs font-medium text-muted-foreground hover:border-primary hover:text-primary">
                 <ImagePlus className="h-4 w-4" />
-                {uploading ? 'Uploading...' : 'Add photo'}
+                {uploading ? t.reviewUploading : t.reviewAddPhoto}
                 <input
                   type="file"
                   accept="image/*"
@@ -192,11 +194,11 @@ export function ReviewForm({ shopId, initialData, onSuccess, onCancel }: ReviewF
       <div className="flex items-center justify-end gap-2">
         {onCancel && (
           <Button type="button" variant="ghost" onClick={onCancel}>
-            Cancel
+            {t.cancel}
           </Button>
         )}
         <Button type="submit" disabled={submitting || uploading}>
-          {submitting ? 'Saving...' : isEdit ? 'Update review' : 'Post review'}
+          {submitting ? t.saving : isEdit ? t.reviewUpdate : t.reviewPost}
         </Button>
       </div>
     </form>

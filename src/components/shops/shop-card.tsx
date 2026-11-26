@@ -5,7 +5,8 @@ import { Clock, Flame, Heart, MapPin, Star } from 'lucide-react';
 import type { ShopItem } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { ShareShopButton } from '@/components/shops/share-shop-button';
-import { cn, formatDistance, formatRating } from '@/lib/utils';
+import { cn, formatRating } from '@/lib/utils';
+import { useI18n } from '@/components/language-provider';
 
 interface ShopCardProps {
   shop: ShopItem;
@@ -15,7 +16,13 @@ interface ShopCardProps {
 }
 
 export function ShopCard({ shop, isSelected, onHover, onToggleFavorite }: ShopCardProps) {
-  const distanceLabel = formatDistance(shop.distanceKm);
+  const { t } = useI18n();
+  const distanceLabel =
+    shop.distanceKm !== null && shop.distanceKm !== undefined
+      ? shop.distanceKm < 1
+        ? `${Math.round(shop.distanceKm * 1000)} m ${t.exploreAway}`
+        : `${shop.distanceKm.toFixed(1)} km ${t.exploreAway}`
+      : null;
   const isTrending = shop.trendingScore >= 90;
 
   return (
@@ -40,13 +47,13 @@ export function ShopCard({ shop, isSelected, onHover, onToggleFavorite }: ShopCa
           {shop.isPriorityCity && (
             <Badge className="gap-1 bg-primary text-primary-foreground shadow-sm">
               <MapPin className="h-3 w-3" />
-              Your City
+              {t.exploreYourCityBadge}
             </Badge>
           )}
           {isTrending && (
             <Badge className="gap-1 bg-amber-500/95 text-white backdrop-blur-sm">
               <Flame className="h-3 w-3" />
-              Trending
+              {t.exploreTrendingBadge}
             </Badge>
           )}
           {distanceLabel && (
@@ -60,7 +67,7 @@ export function ShopCard({ shop, isSelected, onHover, onToggleFavorite }: ShopCa
           <ShareShopButton slug={shop.slug} name={shop.name} variant="icon" />
           <button
             type="button"
-            aria-label={shop.isFavorited ? `Remove ${shop.name} from favorites` : `Save ${shop.name} to favorites`}
+            aria-label={shop.isFavorited ? t.shopRemoveFavorite : t.shopSaveFavorite}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();

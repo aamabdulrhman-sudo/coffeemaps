@@ -11,9 +11,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { useI18n } from '@/components/language-provider';
 
 export default function SignInPage() {
   const router = useRouter();
+  const { t } = useI18n();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -29,11 +31,11 @@ export default function SignInPage() {
     setLoading(false);
 
     if (res?.error) {
-      toast.error('Invalid email or password');
+      toast.error(t.authInvalid);
       return;
     }
 
-    toast.success('Welcome back to CoffeeMap!');
+    toast.success(t.authWelcomeBack);
     router.push('/');
     router.refresh();
   }
@@ -45,10 +47,8 @@ export default function SignInPage() {
           <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <Coffee className="h-5 w-5" />
           </div>
-          <CardTitle className="text-2xl">Sign in to CoffeeMap</CardTitle>
-          <CardDescription>
-            Save your favorite coffee spots, earn badges, and share reviews.
-          </CardDescription>
+          <CardTitle className="text-2xl">{t.authSignInTitle}</CardTitle>
+          <CardDescription>{t.authSignInDesc}</CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-4">
@@ -58,18 +58,18 @@ export default function SignInPage() {
             className="w-full"
             onClick={() => signIn('google', { callbackUrl: '/' })}
           >
-            Continue with Google
+            {t.authGoogle}
           </Button>
 
           <div className="relative flex items-center py-1">
             <Separator className="flex-1" />
-            <span className="px-3 text-xs uppercase text-muted-foreground">or</span>
+            <span className="px-3 text-xs uppercase text-muted-foreground">{t.or}</span>
             <Separator className="flex-1" />
           </div>
 
           <form onSubmit={handleEmailSignIn} className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="signin-email">Email</Label>
+              <Label htmlFor="signin-email">{t.email}</Label>
               <Input
                 id="signin-email"
                 type="email"
@@ -81,7 +81,7 @@ export default function SignInPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="signin-password">Password</Label>
+              <Label htmlFor="signin-password">{t.password}</Label>
               <Input
                 id="signin-password"
                 type="password"
@@ -93,14 +93,14 @@ export default function SignInPage() {
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Signing in...' : 'Sign in with Email'}
+              {loading ? t.authSigningIn : t.authEmailSignIn}
             </Button>
           </form>
 
           <p className="text-center text-sm text-muted-foreground">
-            New to CoffeeMap?{' '}
+            {t.authNewPrompt}{' '}
             <Link href="/auth/signup" className="font-semibold text-primary hover:underline">
-              Create an account
+              {t.authCreateAccount}
             </Link>
           </p>
         </CardContent>

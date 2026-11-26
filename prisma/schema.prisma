@@ -20,12 +20,15 @@ model User {
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
-  accounts  Account[]
-  sessions  Session[]
-  reviews   Review[]
-  favorites Favorite[]
-  photos    Photo[]
-  badges    UserBadge[]
+  accounts      Account[]
+  sessions      Session[]
+  reviews       Review[]
+  favorites     Favorite[]
+  photos        Photo[]
+  badges        UserBadge[]
+  following     Follow[]        @relation("Follower")
+  followers     Follow[]        @relation("Following")
+  loyaltyCards  LoyaltyCard[]
 }
 
 model Account {
@@ -89,10 +92,12 @@ model Shop {
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
-  reviews   Review[]
-  favorites Favorite[]
-  photos    Photo[]
-  tags      Tag[]
+  reviews      Review[]
+  favorites    Favorite[]
+  photos       Photo[]
+  tags         Tag[]
+  adBanners    AdBanner[]
+  loyaltyProgram LoyaltyProgram?
 
   @@index([city])
   @@index([averageRating])
@@ -172,4 +177,67 @@ model UserBadge {
 
   @@unique([userId, code])
   @@index([userId])
+}
+
+model Follow {
+  id         String   @id @default(cuid())
+  followerId String
+  followingId String
+  createdAt  DateTime @default(now())
+
+  follower  User @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
+model AdBanner {
+  id        String   @id @default(cuid())
+  title     String
+  subtitle  String?
+  imageUrl  String
+  linkUrl   String?
+  shopId    String?
+  active    Boolean  @default(true)
+  priority  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  shop Shop? @relation(fields: [shopId], references: [id], onDelete: SetNull)
+
+  @@index([active, priority])
+}
+
+model LoyaltyProgram {
+  id          String   @id @default(cuid())
+  shopId      String   @unique
+  stampsGoal  Int      @default(8)
+  reward      String
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  shop  Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  cards LoyaltyCard[]
+
+  @@index([active])
+}
+
+model LoyaltyCard {
+  id          String    @id @default(cuid())
+  userId      String
+  programId   String
+  stamps      Int       @default(0)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  program LoyaltyProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, programId])
+  @@index([userId])
+  @@index([programId])
 }

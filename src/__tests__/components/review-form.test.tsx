@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { ReviewForm } from '@/components/reviews/review-form';
+import { LanguageProvider } from '@/components/language-provider';
 
 describe('ReviewForm', () => {
   beforeEach(() => {
@@ -9,7 +10,11 @@ describe('ReviewForm', () => {
 
   it('validates minimum comment length before submitting', async () => {
     const onSuccess = vi.fn();
-    render(<ReviewForm shopId="shop_1" onSuccess={onSuccess} />);
+    render(
+      <LanguageProvider>
+        <ReviewForm shopId="shop_1" onSuccess={onSuccess} />
+      </LanguageProvider>
+    );
 
     const textarea = screen.getByLabelText(/Your Review/i);
     fireEvent.change(textarea, { target: { value: 'Hi' } });
@@ -26,7 +31,11 @@ describe('ReviewForm', () => {
     } as Response);
 
     const onSuccess = vi.fn();
-    render(<ReviewForm shopId="shop_1" onSuccess={onSuccess} />);
+    render(
+      <LanguageProvider>
+        <ReviewForm shopId="shop_1" onSuccess={onSuccess} />
+      </LanguageProvider>
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'Rate 4 stars' }));
     fireEvent.change(screen.getByLabelText(/Headline/i), {

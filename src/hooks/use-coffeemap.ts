@@ -2,7 +2,15 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import type { DashboardData, ShopDetail, ShopItem, TagItem } from '@/types';
+import type {
+  AdBannerItem,
+  CommunityMember,
+  DashboardData,
+  PublicUserProfile,
+  ShopDetail,
+  ShopItem,
+  TagItem,
+} from '@/types';
 
 export interface ShopFilterParams {
   q?: string;
@@ -112,6 +120,89 @@ export function useDashboard() {
       const res = await fetch('/api/dashboard');
       if (!res.ok) throw new Error('Failed to load dashboard');
       return res.json();
+    },
+  });
+}
+
+/* ---------------- Ads Banners ---------------- */
+
+export function useAdBanners() {
+  return useQuery<{ banners: AdBannerItem[] }>({
+    queryKey: ['ads'],
+    queryFn: async () => {
+      const res = await fetch('/api/ads');
+      if (!res.ok) throw new Error('Failed to load banners');
+      return res.json();
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+/* ---------------- Community ---------------- */
+
+export function useCommunity(q: string) {
+  return useQuery<{ users: CommunityMember[] }>({
+    queryKey: ['community', q],
+    queryFn: async () => {
+      const res = await fetch(`/api/community?q=${encodeURIComponent(q)}`);
+      if (!res.ok) throw new Error('Failed to load community');
+      return res.json();
+    },
+  });
+}
+
+export function usePublicProfile(userId: string) {
+  return useQuery<{ user: PublicUserProfile }>({
+    queryKey: ['user', userId],
+    queryFn: async () => {
+      const res = await fetch(`/api/users/${userId}`);
+      if (!res.ok) throw new Error('Failed to load profile');
+      return res.json();
+    },
+  });
+}
+
+export function useToggleFollow() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      const res = await fetch(`/api/users/${userId}/follow`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Failed to update follow');
+      return data as { isFollowing: boolean; followersCount: number };
+    },
+    onSuccess: (data) => {
+      toast.success(data.isFollowing ? 'Following' : 'Unfollowed');
+      queryClient.invalidateQueries({ queryKey: ['community'] });
+      queryClient.invalidateQueries({ queryKey: ['user'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+    onError: (err: Error) => {
+      toast.error(err.message);
+    },
+  });
+}
+
+/* ---------------- Loyalty ---------------- */
+
+export function useLoyaltyCheckIn() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (shopId: string) => {
+      const res = await fetch('/api/loyalty/checkin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ shopId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Failed to check in');
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['shop'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
 }

@@ -13,6 +13,7 @@ import {
 import type { ShopFilterParams } from '@/hooks/use-coffeemap';
 import type { TagItem } from '@/types';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/components/language-provider';
 
 export type CityMode = 'priority' | 'only';
 
@@ -56,6 +57,7 @@ export function ShopFilters({
   onClearLocation,
   onReset,
 }: ShopFiltersProps) {
+  const { t } = useI18n();
   const displayTags = tags.length > 0 ? tags : DEFAULT_TAGS;
   const activeTags = filters.tags ?? [];
 
@@ -79,19 +81,19 @@ export function ShopFilters({
           <Input
             value={filters.q ?? ''}
             onChange={(e) => onChange({ q: e.target.value })}
-            placeholder="Search coffee shops, roasters, or streets..."
+            placeholder={t.exploreSearch}
             className="pl-9"
-            aria-label="Search coffee shops"
+            aria-label={t.exploreSearchLabel}
           />
         </div>
 
         <Select value={selectedCity} onValueChange={onSelectCity}>
-          <SelectTrigger className="w-[165px]" aria-label="Select your city">
+          <SelectTrigger className="w-[165px]" aria-label={t.exploreSelectCity}>
             <MapPin className="mr-1.5 h-3.5 w-3.5 text-primary" />
-            <SelectValue placeholder="Your city" />
+            <SelectValue placeholder={t.exploreYourCity} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Cities</SelectItem>
+            <SelectItem value="all">{t.allCities}</SelectItem>
             {cityOptions.map((city) => (
               <SelectItem key={city} value={city}>
                 {city}
@@ -104,7 +106,7 @@ export function ShopFilters({
           <div
             className="inline-flex h-10 items-center rounded-xl border bg-background p-1 text-xs"
             role="group"
-            aria-label="City display mode"
+            aria-label={t.exploreCityMode}
           >
             <button
               type="button"
@@ -116,7 +118,7 @@ export function ShopFilters({
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
-              Priority
+              {t.explorePriority}
             </button>
             <button
               type="button"
@@ -128,7 +130,7 @@ export function ShopFilters({
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
-              Only
+              {t.exploreOnly}
             </button>
           </div>
         )}
@@ -137,14 +139,14 @@ export function ShopFilters({
           value={String(filters.minRating ?? 0)}
           onValueChange={(value) => onChange({ minRating: Number(value) })}
         >
-          <SelectTrigger className="w-[135px]" aria-label="Filter by minimum rating">
-            <SelectValue placeholder="Any rating" />
+          <SelectTrigger className="w-[135px]" aria-label={t.exploreMinRating}>
+            <SelectValue placeholder={t.exploreAnyRating} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="0">Any Rating</SelectItem>
-            <SelectItem value="4">4.0+ Stars</SelectItem>
-            <SelectItem value="4.5">4.5+ Stars</SelectItem>
-            <SelectItem value="4.8">4.8+ Stars</SelectItem>
+            <SelectItem value="0">{t.exploreAnyRating}</SelectItem>
+            <SelectItem value="4">4.0+ ★</SelectItem>
+            <SelectItem value="4.5">4.5+ ★</SelectItem>
+            <SelectItem value="4.8">4.8+ ★</SelectItem>
           </SelectContent>
         </Select>
 
@@ -152,22 +154,22 @@ export function ShopFilters({
           value={filters.sort ?? 'trending'}
           onValueChange={(value) => onChange({ sort: value as ShopFilterParams['sort'] })}
         >
-          <SelectTrigger className="w-[140px]" aria-label="Sort coffee shops">
+          <SelectTrigger className="w-[140px]" aria-label={t.exploreSort}>
             <SlidersHorizontal className="mr-1.5 h-3.5 w-3.5 text-muted-foreground" />
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="trending">Trending</SelectItem>
-            <SelectItem value="rating">Top Rated</SelectItem>
-            <SelectItem value="reviews">Most Reviewed</SelectItem>
-            {hasLocation && <SelectItem value="nearest">Nearest Me</SelectItem>}
+            <SelectItem value="trending">{t.exploreSortTrending}</SelectItem>
+            <SelectItem value="rating">{t.exploreSortTopRated}</SelectItem>
+            <SelectItem value="reviews">{t.exploreSortMostReviewed}</SelectItem>
+            {hasLocation && <SelectItem value="nearest">{t.exploreSortNearest}</SelectItem>}
           </SelectContent>
         </Select>
 
         {hasLocation ? (
           <Button variant="secondary" size="sm" onClick={onClearLocation} className="gap-1.5">
             <LocateFixed className="h-4 w-4 text-sky-500" />
-            Near Me
+            {t.exploreNearMe}
             <X className="h-3.5 w-3.5" />
           </Button>
         ) : (
@@ -179,7 +181,7 @@ export function ShopFilters({
             className="gap-1.5"
           >
             <LocateFixed className="h-4 w-4" />
-            {locating ? 'Detecting city...' : 'Detect City'}
+            {locating ? t.exploreDetecting : t.exploreDetectCity}
           </Button>
         )}
       </div>
@@ -209,13 +211,13 @@ export function ShopFilters({
             <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
               <MapPin className="h-3 w-3" />
               {citySource === 'gps'
-                ? `GPS City: ${selectedCity}`
+                ? `${t.exploreGpsCity}: ${selectedCity}`
                 : citySource === 'profile'
-                  ? `Profile City: ${selectedCity}`
-                  : `City: ${selectedCity}`}
+                  ? `${t.exploreProfileCity}: ${selectedCity}`
+                  : `${t.exploreCityLabel}: ${selectedCity}`}
               <button
                 type="button"
-                aria-label="Clear city priority"
+                aria-label={t.exploreResetFilters}
                 onClick={() => onSelectCity('all')}
                 className="ml-0.5 rounded-full hover:text-foreground"
               >
@@ -231,7 +233,7 @@ export function ShopFilters({
           activeTags.length > 0) && (
           <Button variant="ghost" size="sm" onClick={onReset} className="h-7 gap-1 text-xs">
             <Sparkles className="h-3 w-3" />
-            Reset filters
+            {t.exploreResetFilters}
           </Button>
         )}
       </div>

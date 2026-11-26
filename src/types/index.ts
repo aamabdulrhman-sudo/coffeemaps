@@ -5,6 +5,33 @@ export interface TagItem {
   icon: string;
 }
 
+export interface LoyaltyProgramItem {
+  id: string;
+  shopId: string;
+  stampsGoal: number;
+  reward: string;
+  active: boolean;
+}
+
+export interface LoyaltyCardItem {
+  id: string;
+  userId: string;
+  programId: string;
+  stamps: number;
+  completedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  program?: LoyaltyProgramItem & {
+    shop?: {
+      id: string;
+      name: string;
+      slug: string;
+      imageUrl?: string;
+      city?: string;
+    };
+  };
+}
+
 export interface PhotoItem {
   id: string;
   url: string;
@@ -67,6 +94,8 @@ export interface ShopItem {
   isFavorited?: boolean;
   isPriorityCity?: boolean;
   distanceKm?: number | null;
+  loyaltyProgram?: LoyaltyProgramItem | null;
+  loyaltyCard?: LoyaltyCardItem | null;
 }
 
 export interface ShopDetail extends ShopItem {
@@ -81,6 +110,8 @@ export interface DashboardData {
     photoCount: number;
     averageRatingGiven: number;
     citiesVisited: number;
+    followers: number;
+    following: number;
   };
   badges: UserBadgeItem[];
   recentReviews: Array<
@@ -96,4 +127,71 @@ export interface DashboardData {
   >;
   favorites: ShopItem[];
   ratingDistribution: Array<{ rating: number; count: number }>;
+  loyaltyCards: LoyaltyCardItem[];
+}
+
+export interface CommunityMember {
+  id: string;
+  name: string | null;
+  image: string | null;
+  bio: string | null;
+  city: string | null;
+  createdAt: string;
+  isFollowing: boolean;
+  isSelf: boolean;
+  _count: {
+    reviews: number;
+    followers: number;
+    following: number;
+    photos: number;
+  };
+}
+
+export interface AdBannerItem {
+  id: string;
+  title: string;
+  subtitle?: string | null;
+  imageUrl: string;
+  linkUrl?: string | null;
+  shopId?: string | null;
+  active: boolean;
+  priority: number;
+  shop?: {
+    id: string;
+    name: string;
+    slug: string;
+    city: string;
+    imageUrl: string;
+    averageRating: number;
+    reviewCount: number;
+  } | null;
+}
+
+export interface PublicUserProfile {
+  id: string;
+  name: string | null;
+  image: string | null;
+  bio: string | null;
+  city: string | null;
+  createdAt: string;
+  isFollowing?: boolean;
+  badges: UserBadgeItem[];
+  reviews: Array<
+    ReviewItem & {
+      shop: {
+        id: string;
+        name: string;
+        slug: string;
+        city: string;
+        imageUrl: string;
+        averageRating: number;
+      };
+    }
+  >;
+  _count: {
+    reviews: number;
+    followers: number;
+    following: number;
+    photos: number;
+  };
 }

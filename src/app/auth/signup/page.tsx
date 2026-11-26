@@ -11,9 +11,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { useI18n } from '@/components/language-provider';
 
 export default function SignUpPage() {
   const router = useRouter();
+  const { t } = useI18n();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -29,7 +31,7 @@ export default function SignUpPage() {
         body: JSON.stringify({ name, email, password }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Could not create account');
+      if (!res.ok) throw new Error(data.error ?? t.authSignUpFailed);
 
       await signIn('credentials', {
         email,
@@ -37,11 +39,11 @@ export default function SignUpPage() {
         redirect: false,
       });
 
-      toast.success('Account created! Welcome to CoffeeMap.');
+      toast.success(t.authAccountCreated);
       router.push('/');
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Sign up failed');
+      toast.error(err instanceof Error ? err.message : t.authSignUpFailed);
     } finally {
       setLoading(false);
     }
@@ -54,8 +56,8 @@ export default function SignUpPage() {
           <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <Coffee className="h-5 w-5" />
           </div>
-          <CardTitle className="text-2xl">Create your CoffeeMap account</CardTitle>
-          <CardDescription>Join coffee explorers mapping the best cafes worldwide.</CardDescription>
+          <CardTitle className="text-2xl">{t.authSignUpTitle}</CardTitle>
+          <CardDescription>{t.authSignUpDesc}</CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-4">
@@ -65,18 +67,18 @@ export default function SignUpPage() {
             className="w-full"
             onClick={() => signIn('google', { callbackUrl: '/' })}
           >
-            Continue with Google
+            {t.authGoogle}
           </Button>
 
           <div className="relative flex items-center py-1">
             <Separator className="flex-1" />
-            <span className="px-3 text-xs uppercase text-muted-foreground">or</span>
+            <span className="px-3 text-xs uppercase text-muted-foreground">{t.or}</span>
             <Separator className="flex-1" />
           </div>
 
           <form onSubmit={handleSignUp} className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="signup-name">Full Name</Label>
+              <Label htmlFor="signup-name">{t.fullName}</Label>
               <Input
                 id="signup-name"
                 value={name}
@@ -87,7 +89,7 @@ export default function SignUpPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="signup-email">Email</Label>
+              <Label htmlFor="signup-email">{t.email}</Label>
               <Input
                 id="signup-email"
                 type="email"
@@ -99,27 +101,27 @@ export default function SignUpPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="signup-password">Password</Label>
+              <Label htmlFor="signup-password">{t.password}</Label>
               <Input
                 id="signup-password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Minimum 8 characters"
+                placeholder={t.authPasswordHint}
                 minLength={8}
                 required
               />
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Creating account...' : 'Create account'}
+              {loading ? t.authCreating : t.authCreateAccountBtn}
             </Button>
           </form>
 
           <p className="text-center text-sm text-muted-foreground">
-            Already have an account?{' '}
+            {t.authHaveAccount}{' '}
             <Link href="/auth/signin" className="font-semibold text-primary hover:underline">
-              Sign in
+              {t.signIn}
             </Link>
           </p>
         </CardContent>

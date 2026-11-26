@@ -9,11 +9,13 @@ import { ShopGridSkeleton } from '@/components/states/loading-skeletons';
 import { EmptyState } from '@/components/states/empty-state';
 import { ErrorState } from '@/components/states/error-state';
 import { Button } from '@/components/ui/button';
+import { useI18n } from '@/components/language-provider';
 
 export default function FavoritesPage() {
   const { data: session, status } = useSession();
   const { data, isLoading, isError, refetch } = useFavorites();
   const toggleFavorite = useToggleFavorite();
+  const { t } = useI18n();
 
   if (status === 'loading') {
     return (
@@ -26,14 +28,10 @@ export default function FavoritesPage() {
   if (!session?.user) {
     return (
       <main className="mx-auto max-w-3xl px-4 py-16">
-        <EmptyState
-          icon={Heart}
-          title="Sign in to view your favorite coffee shops"
-          description="Save specialty cafes around the world and build your personal coffee map."
-        />
+        <EmptyState icon={Heart} title={t.favSignInTitle} description={t.favSignInDesc} />
         <div className="mt-4 flex justify-center">
           <Button asChild>
-            <Link href="/auth/signin">Sign in</Link>
+            <Link href="/auth/signin">{t.signIn}</Link>
           </Button>
         </div>
       </main>
@@ -46,13 +44,11 @@ export default function FavoritesPage() {
     <main className="mx-auto max-w-6xl space-y-6 px-4 py-8 sm:px-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Your Favorite Cafes</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Saved spots ready for your next espresso run or study session.
-          </p>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{t.favTitle}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{t.favSubtitle}</p>
         </div>
         <Button variant="outline" asChild>
-          <Link href="/">Explore more on map</Link>
+          <Link href="/">{t.favExploreMore}</Link>
         </Button>
       </div>
 
@@ -61,11 +57,7 @@ export default function FavoritesPage() {
       ) : isError ? (
         <ErrorState onRetry={() => refetch()} />
       ) : favorites.length === 0 ? (
-        <EmptyState
-          icon={Heart}
-          title="No saved coffee shops yet"
-          description="Tap the heart icon on any coffee shop to save it here for quick access."
-        />
+        <EmptyState icon={Heart} title={t.favEmpty} description={t.favEmptyDesc} />
       ) : (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {favorites.map((shop) => (

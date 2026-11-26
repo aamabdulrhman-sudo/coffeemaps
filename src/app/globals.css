@@ -56,6 +56,15 @@
   body {
     @apply bg-background text-foreground antialiased;
   }
+  html[lang='ar'] body {
+    font-family: var(--font-arabic), var(--font-sans), system-ui, sans-serif;
+  }
+  html[lang='ar'] {
+    font-family: var(--font-arabic), var(--font-sans), system-ui, sans-serif;
+  }
+  html[dir='rtl'] .flip-rtl {
+    transform: scaleX(-1);
+  }
 }
 
 /* Leaflet map container integration */

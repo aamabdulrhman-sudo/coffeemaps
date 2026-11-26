@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Pencil, Star, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { ReviewItem } from '@/types';
@@ -9,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { BadgePill } from '@/components/badges/badge-pill';
 import { ReviewForm } from '@/components/reviews/review-form';
 import { EmptyState } from '@/components/states/empty-state';
+import { useI18n } from '@/components/language-provider';
 
 interface ReviewListProps {
   reviews: ReviewItem[];
@@ -18,6 +20,7 @@ interface ReviewListProps {
 }
 
 export function ReviewList({ reviews, shopId, currentUserId, onChanged }: ReviewListProps) {
+  const { t, formatDate } = useI18n();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -26,23 +29,18 @@ export function ReviewList({ reviews, shopId, currentUserId, onChanged }: Review
     try {
       const res = await fetch(`/api/reviews/${reviewId}`, { method: 'DELETE' });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Failed to delete review');
-      toast.success('Review deleted');
+      if (!res.ok) throw new Error(data.error ?? t.adminFailed);
+      toast.success(t.reviewDeleted);
       onChanged();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Unable to delete review');
+      toast.error(err instanceof Error ? err.message : t.adminFailed);
     } finally {
       setDeletingId(null);
     }
   }
 
   if (reviews.length === 0) {
-    return (
-      <EmptyState
-        title="No reviews yet"
-        description="Have you visited this coffee shop? Share your honest take on the coffee, seating, and WiFi."
-      />
-    );
+    return <EmptyState title={t.reviewNoReviews} description={t.reviewNoReviewsDesc} />;
   }
 
   return (
@@ -89,18 +87,17 @@ export function ReviewList({ reviews, shopId, currentUserId, onChanged }: Review
                 </Avatar>
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-semibold">{review.user.name ?? 'Coffee Lover'}</span>
+                    <Link
+                      href={`/users/${review.user.id}`}
+                      className="text-sm font-semibold hover:text-primary hover:underline"
+                    >
+                      {review.user.name ?? t.profileCoffeeExplorer}
+                    </Link>
                     {review.user.badges?.slice(0, 2).map((badge) => (
                       <BadgePill key={badge.id} name={badge.name} icon={badge.icon} compact />
                     ))}
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    {new Date(review.createdAt).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })}
-                  </p>
+                  <p className="text-xs text-muted-foreground">{formatDate(review.createdAt)}</p>
                 </div>
               </div>
 
@@ -145,9 +142,7 @@ export function ReviewList({ reviews, shopId, currentUserId, onChanged }: Review
             </div>
 
             {review.title && <h4 className="mt-3 text-sm font-semibold">{review.title}</h4>}
-            <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-              {review.comment}
-            </p>
+            <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{review.comment}</p>
 
             {review.photos.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-2">
