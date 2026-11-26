@@ -1,0 +1,175 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String      @id @default(cuid())
+  name          String?
+  email         String      @unique
+  emailVerified DateTime?
+  passwordHash  String?
+  image         String?
+  bio           String?
+  city          String?
+  role          String      @default("USER")
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  accounts  Account[]
+  sessions  Session[]
+  reviews   Review[]
+  favorites Favorite[]
+  photos    Photo[]
+  badges    UserBadge[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Shop {
+  id                 String    @id @default(cuid())
+  name               String
+  slug               String    @unique
+  description        String    @db.Text
+  address            String
+  city               String
+  country            String    @default("Saudi Arabia")
+  latitude           Float
+  longitude          Float
+  imageUrl           String
+  openingHours       String
+  googleMapsUrl      String
+  averageRating      Float     @default(0)
+  reviewCount        Int       @default(0)
+  favoriteCount      Int       @default(0)
+  trendingScore      Float     @default(0)
+  aiSummary          String?   @db.Text
+  aiSummaryUpdatedAt DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  reviews   Review[]
+  favorites Favorite[]
+  photos    Photo[]
+  tags      Tag[]
+
+  @@index([city])
+  @@index([averageRating])
+  @@index([trendingScore])
+  @@index([latitude, longitude])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  rating    Int
+  title     String?
+  comment   String   @db.Text
+  userId    String
+  shopId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shop   Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  photos Photo[]
+
+  @@index([shopId])
+  @@index([userId])
+  @@index([rating])
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  shopId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, shopId])
+  @@index([userId])
+  @@index([shopId])
+}
+
+model Photo {
+  id        String   @id @default(cuid())
+  url       String
+  caption   String?
+  userId    String
+  shopId    String
+  reviewId  String?
+  createdAt DateTime @default(now())
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shop   Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  review Review? @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@index([shopId])
+  @@index([reviewId])
+  @@index([userId])
+}
+
+model Tag {
+  id    String @id @default(cuid())
+  name  String @unique
+  slug  String @unique
+  icon  String @default("coffee")
+  shops Shop[]
+}
+
+model UserBadge {
+  id          String   @id @default(cuid())
+  userId      String
+  code        String
+  name        String
+  description String
+  icon        String
+  awardedAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, code])
+  @@index([userId])
+}

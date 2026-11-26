@@ -1,0 +1,70 @@
+import { z } from 'zod';
+
+export const registerSchema = z.object({
+  name: z.string().trim().min(2, 'Name must be at least 2 characters').max(80),
+  email: z.string().trim().email('Please enter a valid email address').toLowerCase(),
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .max(100, 'Password is too long'),
+});
+
+export const signInSchema = z.object({
+  email: z.string().trim().email('Please enter a valid email address').toLowerCase(),
+  password: z.string().min(1, 'Password is required'),
+});
+
+export const reviewCreateSchema = z.object({
+  shopId: z.string().min(1, 'Shop ID is required'),
+  rating: z.coerce.number().int().min(1, 'Rating must be 1 to 5').max(5, 'Rating must be 1 to 5'),
+  title: z.string().trim().max(120, 'Title must be under 120 characters').optional().nullable(),
+  comment: z
+    .string()
+    .trim()
+    .min(5, 'Review must be at least 5 characters')
+    .max(2000, 'Review cannot exceed 2000 characters'),
+  photoUrls: z.array(z.string().min(1)).max(5, 'Maximum 5 photos per review').optional().default([]),
+});
+
+export const reviewUpdateSchema = z.object({
+  rating: z.coerce.number().int().min(1).max(5).optional(),
+  title: z.string().trim().max(120).optional().nullable(),
+  comment: z.string().trim().min(5).max(2000).optional(),
+});
+
+export const shopFilterSchema = z.object({
+  q: z.string().trim().optional(),
+  city: z.string().trim().optional(),
+  priorityCity: z.string().trim().optional(),
+  minRating: z.coerce.number().min(0).max(5).optional(),
+  tags: z.string().trim().optional(),
+  sort: z.enum(['trending', 'rating', 'nearest', 'reviews']).optional().default('trending'),
+  lat: z.coerce.number().min(-90).max(90).optional(),
+  lng: z.coerce.number().min(-180).max(180).optional(),
+  radiusKm: z.coerce.number().min(1).max(500).optional(),
+});
+
+export const shopCreateSchema = z.object({
+  name: z.string().trim().min(2).max(120),
+  description: z.string().trim().min(10).max(2000),
+  address: z.string().trim().min(4).max(200),
+  city: z.string().trim().min(2).max(80),
+  country: z.string().trim().min(2).max(80).default('Saudi Arabia'),
+  latitude: z.coerce.number().min(-90).max(90),
+  longitude: z.coerce.number().min(-180).max(180),
+  imageUrl: z.string().url('Must be a valid image URL'),
+  openingHours: z.string().trim().min(3).max(120),
+  googleMapsUrl: z.string().url('Must be a valid Google Maps URL'),
+  tagSlugs: z.array(z.string()).min(1, 'Select at least one tag'),
+});
+
+export const favoriteToggleSchema = z.object({
+  shopId: z.string().min(1, 'Shop ID is required'),
+});
+
+export const profileUpdateSchema = z.object({
+  name: z.string().trim().min(2, 'Name must be at least 2 characters').max(80),
+  bio: z.string().trim().max(300, 'Bio must be under 300 characters').optional().nullable(),
+  city: z.string().trim().max(80, 'City must be under 80 characters').optional().nullable(),
+  image: z.string().url('Must be a valid URL').or(z.literal('')).optional().nullable(),
+});
