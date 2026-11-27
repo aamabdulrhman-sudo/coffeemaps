@@ -11,6 +11,7 @@ import {
   LayoutDashboard,
   MessageSquare,
   Star,
+  Ticket,
   Users,
 } from 'lucide-react';
 import { useDashboard, useToggleFavorite } from '@/hooks/use-coffeemap';
@@ -194,12 +195,20 @@ export default function DashboardPage() {
 
       {/* Loyalty Cards */}
       <section className="space-y-4">
-        <div>
-          <h2 className="flex items-center gap-2 text-xl font-semibold">
-            <Gift className="h-5 w-5 text-primary" />
-            {t.dashLoyalty}
-          </h2>
-          <p className="mt-0.5 text-sm text-muted-foreground">{t.dashLoyaltyDesc}</p>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 className="flex items-center gap-2 text-xl font-semibold">
+              <Gift className="h-5 w-5 text-primary" />
+              {t.dashLoyalty}
+            </h2>
+            <p className="mt-0.5 text-sm text-muted-foreground">{t.dashLoyaltyDesc}</p>
+          </div>
+          <Button variant="outline" size="sm" asChild className="gap-1.5">
+            <Link href="/loyalty">
+              <Ticket className="h-4 w-4" />
+              {t.dashOpenWallet}
+            </Link>
+          </Button>
         </div>
         {loyaltyCards.length === 0 ? (
           <EmptyState icon={Gift} title={t.dashLoyaltyEmpty} description={t.dashLoyaltyEmptyDesc} />

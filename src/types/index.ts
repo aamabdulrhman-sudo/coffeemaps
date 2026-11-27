@@ -17,8 +17,11 @@ export interface LoyaltyCardItem {
   id: string;
   userId: string;
   programId: string;
+  code?: string | null;
   stamps: number;
+  redemptions: number;
   completedAt?: string | null;
+  lastRedeemedAt?: string | null;
   createdAt: string;
   updatedAt: string;
   program?: LoyaltyProgramItem & {

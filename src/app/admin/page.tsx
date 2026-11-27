@@ -13,6 +13,7 @@ import {
   Pencil,
   Plus,
   ShieldCheck,
+  Store,
   Trash2,
   Users as UsersIcon,
   X,
@@ -74,6 +75,8 @@ interface AdminUser {
   city: string | null;
   image: string | null;
   createdAt: string;
+  shopId?: string | null;
+  operatedShop?: { id: string; name: string } | null;
   _count: { reviews: number; followers: number; following: number };
 }
 
@@ -1006,14 +1009,22 @@ function UsersAdmin() {
   const { data: session } = useSession();
   const { t } = useI18n();
   const [users, setUsers] = useState<AdminUser[]>([]);
+  const [shops, setShops] = useState<AdminShop[]>([]);
   const [loading, setLoading] = useState(true);
+  // Per-user shop selection while role = SHOP (before saving)
+  const [pendingShop, setPendingShop] = useState<Record<string, string>>({});
 
   async function loadData() {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/users');
-      const data = await res.json();
-      if (data.users) setUsers(data.users);
+      const [usersRes, shopsRes] = await Promise.all([
+        fetch('/api/admin/users'),
+        fetch('/api/admin/shops'),
+      ]);
+      const usersData = await usersRes.json();
+      const shopsData = await shopsRes.json();
+      if (usersData.users) setUsers(usersData.users);
+      if (shopsData.shops) setShops(shopsData.shops);
     } finally {
       setLoading(false);
     }
@@ -1023,17 +1034,32 @@ function UsersAdmin() {
     void loadData();
   }, []);
 
-  async function changeRole(userId: string, role: string) {
+  async function changeRole(userId: string, role: string, shopId?: string) {
     try {
       const res = await fetch('/api/admin/users', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, role }),
+        body: JSON.stringify({ userId, role, shopId }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? t.adminFailed);
       toast.success(t.adminUserUpdated);
-      setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, role } : u)));
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === userId
+            ? {
+                ...u,
+                role,
+                shopId: shopId ?? null,
+                operatedShop: shopId
+                  ? shops.find((s) => s.id === shopId)
+                    ? { id: shopId, name: shops.find((s) => s.id === shopId)!.name }
+                    : u.operatedShop
+                  : null,
+              }
+            : u
+        )
+      );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t.adminFailed);
     }
@@ -1059,7 +1085,6 @@ function UsersAdmin() {
           {users.map((user) => (
             <Card key={user.id} className="py-3">
               <CardContent className="flex flex-wrap items-center gap-3 px-4">
-                <Layers className="hidden" />
                 <div className="min-w-0 flex-1">
                   <Link href={`/users/${user.id}`} className="font-semibold hover:text-primary">
                     {user.name ?? '—'}
@@ -1068,6 +1093,12 @@ function UsersAdmin() {
                     {user.email} • {user._count.reviews} {t.reviews} • {user._count.followers}{' '}
                     {t.profileFollowers}
                   </p>
+                  {user.role === 'SHOP' && (
+                    <p className="text-xs font-medium text-primary">
+                      <Store className="mr-1 inline h-3 w-3" />
+                      {user.operatedShop?.name ?? t.adminNoShopLinked}
+                    </p>
+                  )}
                 </div>
                 {user.id === session?.user?.id ? (
                   <Badge className="gap-1">
@@ -1075,15 +1106,44 @@ function UsersAdmin() {
                     {t.adminRoleAdmin}
                   </Badge>
                 ) : (
-                  <Select value={user.role} onValueChange={(v) => changeRole(user.id, v)}>
-                    <SelectTrigger className="w-[130px]" aria-label={t.adminUserRole}>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="USER">{t.adminRoleUser}</SelectItem>
-                      <SelectItem value="ADMIN">{t.adminRoleAdmin}</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {user.role === 'SHOP' && (
+                      <Select
+                        value={
+                          pendingShop[user.id] ?? user.shopId ?? user.operatedShop?.id ?? 'none'
+                        }
+                        onValueChange={(v) => {
+                          setPendingShop((prev) => ({ ...prev, [user.id]: v }));
+                          changeRole(user.id, 'SHOP', v === 'none' ? undefined : v);
+                        }}
+                      >
+                        <SelectTrigger className="w-[170px]" aria-label={t.adminShopCity}>
+                          <SelectValue placeholder={t.adminShopName} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">—</SelectItem>
+                          {shops.map((shop) => (
+                            <SelectItem key={shop.id} value={shop.id}>
+                              {shop.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                    <Select
+                      value={user.role}
+                      onValueChange={(v) => changeRole(user.id, v, pendingShop[user.id])}
+                    >
+                      <SelectTrigger className="w-[130px]" aria-label={t.adminUserRole}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="USER">{t.adminRoleUser}</SelectItem>
+                        <SelectItem value="SHOP">{t.adminRoleShop}</SelectItem>
+                        <SelectItem value="ADMIN">{t.adminRoleAdmin}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 )}
               </CardContent>
             </Card>

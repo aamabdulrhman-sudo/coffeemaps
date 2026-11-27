@@ -12,7 +12,9 @@ import {
   LogOut,
   Moon,
   ShieldCheck,
+  Store,
   Sun,
+  Ticket,
   Users,
   User as UserIcon,
   Languages,
@@ -36,6 +38,7 @@ export function Navbar() {
   const { t, locale, toggleLocale } = useI18n();
 
   const isAdmin = session?.user?.role === 'ADMIN';
+  const isShopStaff = session?.user?.role === 'SHOP';
 
   const navItems = [
     { href: '/', label: t.navExplore, icon: Compass },
@@ -170,6 +173,20 @@ export function Navbar() {
                     {t.navProfile}
                   </Link>
                 </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/loyalty">
+                    <Ticket className="h-4 w-4" />
+                    {t.dashOpenWallet}
+                  </Link>
+                </DropdownMenuItem>
+                {isShopStaff && (
+                  <DropdownMenuItem asChild>
+                    <Link href="/cafe">
+                      <Store className="h-4 w-4" />
+                      {t.cafeConsoleTitle}
+                    </Link>
+                  </DropdownMenuItem>
+                )}
                 {isAdmin && (
                   <DropdownMenuItem asChild>
                     <Link href="/admin">

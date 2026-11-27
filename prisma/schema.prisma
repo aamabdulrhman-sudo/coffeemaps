@@ -16,7 +16,10 @@ model User {
   image         String?
   bio           String?
   city          String?
+  // USER (regular member) | ADMIN (platform admin) | SHOP (cafe staff/owner)
   role          String      @default("USER")
+  // For SHOP-role accounts: the cafe this account operates
+  shopId        String?
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
@@ -29,6 +32,7 @@ model User {
   following     Follow[]        @relation("Follower")
   followers     Follow[]        @relation("Following")
   loyaltyCards  LoyaltyCard[]
+  operatedShop  Shop?           @relation("OperatedBy", fields: [shopId], references: [id], onDelete: SetNull)
 }
 
 model Account {
@@ -98,6 +102,7 @@ model Shop {
   tags         Tag[]
   adBanners    AdBanner[]
   loyaltyProgram LoyaltyProgram?
+  staff        User[]          @relation("OperatedBy")
 
   @@index([city])
   @@index([averageRating])
@@ -227,15 +232,19 @@ model LoyaltyProgram {
 }
 
 model LoyaltyCard {
-  id          String    @id @default(cuid())
-  userId      String
-  programId   String
-  stamps      Int       @default(0)
-  completedAt DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id             String    @id @default(cuid())
+  userId         String
+  programId      String
+  // Short unique code printed in the customer's QR card — the cafe enters it to verify
+  code           String?   @unique
+  stamps         Int       @default(0)
+  redemptions    Int       @default(0)
+  completedAt    DateTime?
+  lastRedeemedAt DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
-  user    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   program LoyaltyProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
 
   @@unique([userId, programId])

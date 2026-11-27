@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { ArrowLeft, Clock, ExternalLink, Gift, Heart, MapPin, Star } from 'lucide-react';
+import { ArrowLeft, Clock, ExternalLink, Gift, Heart, MapPin, Star, Ticket } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLoyaltyCheckIn, useShopDetail, useToggleFavorite } from '@/hooks/use-coffeemap';
 import { Badge } from '@/components/ui/badge';
@@ -87,13 +87,21 @@ function LoyaltyProgramCard({ shopId }: { shopId: string }) {
         {completed && <p className="text-xs font-semibold text-primary">🎁 {t.dashCompleted}</p>}
 
         {session?.user ? (
-          <Button
-            onClick={handleCheckIn}
-            disabled={checkIn.isPending || completed}
-            className="w-full"
-          >
-            {checkIn.isPending ? t.loading : t.loyaltyCheckIn}
-          </Button>
+          <>
+            <Button
+              onClick={handleCheckIn}
+              disabled={checkIn.isPending || completed}
+              className="w-full"
+            >
+              {checkIn.isPending ? t.loading : t.loyaltyCheckIn}
+            </Button>
+            <Button variant="outline" size="sm" className="w-full gap-1.5" asChild>
+              <Link href="/loyalty">
+                <Ticket className="h-4 w-4" />
+                {t.dashOpenWallet}
+              </Link>
+            </Button>
+          </>
         ) : (
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-xs text-muted-foreground">{t.loyaltySignInToCollect}</p>

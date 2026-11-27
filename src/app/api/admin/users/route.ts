@@ -17,6 +17,8 @@ export async function GET() {
         city: true,
         image: true,
         createdAt: true,
+        shopId: true,
+        operatedShop: { select: { id: true, name: true } },
         _count: { select: { reviews: true, followers: true, following: true } },
       },
       orderBy: { createdAt: 'desc' },
@@ -51,10 +53,17 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'You cannot change your own role' }, { status: 400 });
     }
 
+    // SHOP accounts must be bound to a cafe
+    const shopId =
+      parsed.data.role === 'SHOP' ? ((body as { shopId?: string }).shopId ?? null) : null;
+    if (parsed.data.role === 'SHOP' && !shopId) {
+      return NextResponse.json({ error: 'Select the cafe this account operates' }, { status: 400 });
+    }
+
     const user = await prisma.user.update({
       where: { id: targetId },
-      data: { role: parsed.data.role },
-      select: { id: true, role: true },
+      data: { role: parsed.data.role, shopId },
+      select: { id: true, role: true, shopId: true },
     });
 
     return NextResponse.json({ user });

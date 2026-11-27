@@ -112,7 +112,9 @@ export const adminSetupSchema = z.object({
 });
 
 export const adminRoleUpdateSchema = z.object({
-  role: z.enum(['USER', 'ADMIN']),
+  role: z.enum(['USER', 'ADMIN', 'SHOP']),
+  // Required when role = SHOP: the cafe this staff account operates
+  shopId: z.string().optional().nullable(),
 });
 
 export const adminShopUpdateSchema = shopCreateSchema.partial();

@@ -3,7 +3,30 @@ import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
+const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+function generateCardCode(): string {
+  const pick = (n: number) =>
+    Array.from(
+      { length: n },
+      () => CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)]
+    ).join('');
+  return `CM-${pick(4)}-${pick(4)}`;
+}
+
 async function main() {
+  // Backfill: generate codes for loyalty cards created before the QR wallet update.
+  // Runs before the seeding guard so it always applies on redeploy.
+  const cardsWithoutCode = await prisma.loyaltyCard.findMany({ where: { code: null } });
+  for (const card of cardsWithoutCode) {
+    await prisma.loyaltyCard.update({
+      where: { id: card.id },
+      data: { code: generateCardCode() },
+    });
+  }
+  if (cardsWithoutCode.length > 0) {
+    console.log(`Backfilled ${cardsWithoutCode.length} loyalty card code(s).`);
+  }
+
   const existingShopsCount = await prisma.shop.count();
   if (existingShopsCount >= 11 && process.env.FORCE_SEED !== 'true') {
     console.log('CoffeeMap database already seeded. Skipping.');
@@ -42,7 +65,8 @@ async function main() {
       passwordHash,
       bio: 'Specialty coffee enthusiast, remote software architect, and espresso hunter.',
       city: 'Riyadh',
-      image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop',
+      image:
+        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop',
     },
   });
 
@@ -55,7 +79,8 @@ async function main() {
       passwordHash,
       bio: 'Pour-over fan and weekend cafe explorer.',
       city: 'Dubai',
-      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop',
+      image:
+        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop',
     },
   });
 
@@ -286,8 +311,7 @@ async function main() {
       userId: secondUser.id,
       rating: 5,
       title: 'Smooth Spanish latte & great pour-over',
-      comment:
-        'Friendly baristas, balanced espresso, and comfortable seating for remote work.',
+      comment: 'Friendly baristas, balanced espresso, and comfortable seating for remote work.',
     },
     {
       shopSlug: 'hejaz-espresso-medina',

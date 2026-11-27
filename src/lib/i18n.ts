@@ -189,6 +189,37 @@ export const dictionaries = {
     dashStamps: 'stamps',
     dashReward: 'Reward',
     dashCompleted: 'Reward unlocked! Show this at the counter to claim.',
+    dashOpenWallet: 'My Loyalty Cards',
+
+    // Wallet (customer phone card)
+    walletTitle: 'Loyalty Cards',
+    walletSubtitle: 'Show the QR at the counter to collect stamps and claim rewards.',
+    walletSignInTitle: 'Sign in to view your loyalty cards',
+    walletSignInDesc: 'Collect stamps at your favorite cafes and unlock free rewards.',
+    walletCardBadge: 'Loyalty Card',
+    walletShowQr: 'Show QR to the cafe',
+    walletShowCard: 'Back to card',
+    walletQrHint: 'The cafe scans or enters this code to add your stamps',
+    walletQrLabel: 'Loyalty card QR code',
+    walletRedemptions: 'claimed',
+    walletLastUpdate: 'Last update:',
+    walletMemberSince: 'Card since',
+
+    // Cafe console (staff verification)
+    cafeConsoleTitle: 'Cafe Console',
+    cafeConsoleSubtitle: 'Verify customer loyalty cards, add purchase stamps, and redeem rewards.',
+    cafeConsoleCardCode: 'Customer card code',
+    cafeConsoleVerify: 'Verify',
+    cafeConsoleScanHint: 'Ask the customer to open their QR card, then type the code under it.',
+    cafeConsoleNotFound: 'No loyalty card found with this code',
+    cafeConsoleAddStamp: 'Add stamp',
+    cafeConsoleRedeem: 'Redeem reward',
+    cafeConsoleRewardReady: 'Reward ready — redeem and give the customer their free item',
+    cafeConsoleEmptyHint: 'Enter a customer card code to see their stamps and rewards.',
+    cafeConsoleForbidden: 'Cafe staff access only',
+    cafeConsoleForbiddenDesc:
+      'This console is for cafe accounts. Ask the platform admin to link your account with your cafe.',
+    cafeConsoleAdminNote: "Admin view — actions apply to the card's cafe",
 
     // Favorites
     favTitle: 'Your Favorite Cafes',
@@ -296,6 +327,8 @@ export const dictionaries = {
     adminUserRole: 'Role',
     adminRoleUser: 'User',
     adminRoleAdmin: 'Admin',
+    adminRoleShop: 'Cafe Staff',
+    adminNoShopLinked: 'No cafe linked yet',
     adminUserUpdated: 'Member role updated',
     adminUsersTitle: 'Platform Members',
     adminUsersDesc: 'Promote trusted members to platform admins.',
@@ -495,6 +528,37 @@ export const dictionaries = {
     dashStamps: 'طوابع',
     dashReward: 'المكافأة',
     dashCompleted: 'تم فتح المكافأة! أظهر هذا عند الكاشير لاستلامها.',
+    dashOpenWallet: 'بطاقات الولاء',
+
+    // Wallet (customer phone card)
+    walletTitle: 'بطاقات الولاء',
+    walletSubtitle: 'أظهر رمز QR عند الكاشير لجمع الطوابع واستلام المكافآت.',
+    walletSignInTitle: 'سجّل دخولك لعرض بطاقات الولاء',
+    walletSignInDesc: 'اجمع الطوابع في مقاهيك المفضلة واحصل على مكافآت مجانية.',
+    walletCardBadge: 'بطاقة ولاء',
+    walletShowQr: 'أظهر رمز QR للمقهى',
+    walletShowCard: 'عودة للبطاقة',
+    walletQrHint: 'يقرأ المقهى هذا الرمز أو يدخل الرمز تحته لإضافة طوابعك',
+    walletQrLabel: 'رمز بطاقة الولاء',
+    walletRedemptions: 'استبدال',
+    walletLastUpdate: 'آخر تحديث:',
+    walletMemberSince: 'البطاقة منذ',
+
+    // Cafe console (staff verification)
+    cafeConsoleTitle: 'كونسول المقهى',
+    cafeConsoleSubtitle: 'تحقق من بطاقات ولاء العملاء، أضف طوابع الشراء، واستبدل المكافآت.',
+    cafeConsoleCardCode: 'رمز بطاقة العميل',
+    cafeConsoleVerify: 'تحقق',
+    cafeConsoleScanHint: 'اطلب من العميل فتح رمز QR ثم أدخل الرمز الظاهر تحته.',
+    cafeConsoleNotFound: 'لا توجد بطاقة ولاء بهذا الرمز',
+    cafeConsoleAddStamp: 'إضافة طابع',
+    cafeConsoleRedeem: 'استبدال المكافأة',
+    cafeConsoleRewardReady: 'المكافأة جاهزة — استبدلها وقدّمها للعميل مجاناً',
+    cafeConsoleEmptyHint: 'أدخل رمز بطاقة عميل لعرض طوابعه ومكافآته.',
+    cafeConsoleForbidden: 'حساب مقهى فقط',
+    cafeConsoleForbiddenDesc:
+      'هذا الكونسول مخصص لحسابات المقاهي. اطلب من مدير المنصة ربط حسابك بمقهاك.',
+    cafeConsoleAdminNote: 'عرض المدير — تُطبق الإجراءات على مقهى البطاقة',
 
     // Favorites
     favTitle: 'مقاهيك المفضلة',
@@ -599,6 +663,8 @@ export const dictionaries = {
     adminUserRole: 'الدور',
     adminRoleUser: 'مستخدم',
     adminRoleAdmin: 'مدير',
+    adminRoleShop: 'موظف مقهى',
+    adminNoShopLinked: 'لم يُربط بمقهى بعد',
     adminUserUpdated: 'تم تحديث دور العضو',
     adminUsersTitle: 'أعضاء المنصة',
     adminUsersDesc: 'ترقية أعضاء موثوقين إلى مديري المنصة.',

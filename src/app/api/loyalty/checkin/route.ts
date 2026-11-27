@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { loyaltyCheckInSchema } from '@/lib/validations';
+import { ensureLoyaltyCard } from '@/lib/loyalty';
 
 /**
  * Check in at a coffee shop with an active loyalty program → collect one stamp.
@@ -36,11 +37,7 @@ export async function POST(request: Request) {
     }
 
     const userId = session.user.id;
-    const card = await prisma.loyaltyCard.upsert({
-      where: { userId_programId: { userId, programId: program.id } },
-      create: { userId, programId: program.id, stamps: 0 },
-      update: {},
-    });
+    const card = await ensureLoyaltyCard(userId, program.id);
 
     const now = new Date();
     const lastCheckIn = card.updatedAt;
