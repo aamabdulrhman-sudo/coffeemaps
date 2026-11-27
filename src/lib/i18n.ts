@@ -192,18 +192,49 @@ export const dictionaries = {
     dashOpenWallet: 'My Loyalty Cards',
 
     // Wallet (customer phone card)
-    walletTitle: 'Loyalty Cards',
-    walletSubtitle: 'Show the QR at the counter to collect stamps and claim rewards.',
-    walletSignInTitle: 'Sign in to view your loyalty cards',
-    walletSignInDesc: 'Collect stamps at your favorite cafes and unlock free rewards.',
+    walletTitle: 'Loyalty Card',
+    walletSubtitle: 'One card for all cafes — show the QR at the counter to collect stamps.',
+    walletSignInTitle: 'Sign in to view your loyalty card',
+    walletSignInDesc: 'One universal card, stamps at every cafe, rewards on the go.',
     walletCardBadge: 'Loyalty Card',
+    walletUniversalBadge: 'All Cafes',
     walletShowQr: 'Show QR to the cafe',
-    walletShowCard: 'Back to card',
-    walletQrHint: 'The cafe scans or enters this code to add your stamps',
+    walletShowCard: 'Card details',
+    walletQrHint: 'Any cafe scans or enters this code to add your stamps',
     walletQrLabel: 'Loyalty card QR code',
+    walletCode: 'Card code',
     walletRedemptions: 'claimed',
     walletLastUpdate: 'Last update:',
-    walletMemberSince: 'Card since',
+    walletMemberSince: 'Member since',
+    walletBalancesTitle: 'Your cafe stamps',
+    walletEmpty: 'Your loyalty card is ready',
+    walletAddToPhone: 'Add to phone',
+    walletApple: ' Add to Apple Wallet',
+    walletGoogle: 'Save to Google Wallet',
+    walletGuideTitle: 'Add your card to your phone',
+    walletGuideSubtitle: 'Keep your loyalty card one tap away.',
+    walletGuideIos:
+      'Open this page in Safari, tap the Share icon, then choose "Add to Home Screen". Your card opens full-screen like a wallet pass.',
+    walletGuideAndroid:
+      'Open this page in Chrome, tap the ⋮ menu, then choose "Add to Home screen".',
+    walletGuideNote:
+      'Native Apple Wallet / Google Wallet buttons appear automatically once the platform admin configures the wallet certificates.',
+
+    // Cafe signup
+    cafeSignupTitle: 'Register your cafe',
+    cafeSignupDesc:
+      'Create your cafe account, list your shop, and launch a loyalty program in one step.',
+    cafeSignupAccountSection: 'Owner account',
+    cafeSignupShopSection: 'Cafe details',
+    cafeSignupLoyaltySection: 'Loyalty program',
+    cafeSignupBtn: 'Create cafe account',
+    cafeSignupFailed: 'Failed to register the cafe',
+    cafeSignupSuccess: 'Cafe registered! Your loyalty program is live.',
+    cafeSignupPrompt: 'Own a cafe?',
+    cafeSignupLink: 'Register your cafe →',
+    cafeSignupNav: 'Register your cafe',
+    cafeSignupNote:
+      'Your cafe will appear on the map immediately. Platform admins can edit or adjust it later.',
 
     // Cafe console (staff verification)
     cafeConsoleTitle: 'Cafe Console',
@@ -215,6 +246,7 @@ export const dictionaries = {
     cafeConsoleAddStamp: 'Add stamp',
     cafeConsoleRedeem: 'Redeem reward',
     cafeConsoleRewardReady: 'Reward ready — redeem and give the customer their free item',
+    cafeConsoleRewardReadyShort: 'Reward ready',
     cafeConsoleEmptyHint: 'Enter a customer card code to see their stamps and rewards.',
     cafeConsoleForbidden: 'Cafe staff access only',
     cafeConsoleForbiddenDesc:
@@ -531,18 +563,46 @@ export const dictionaries = {
     dashOpenWallet: 'بطاقات الولاء',
 
     // Wallet (customer phone card)
-    walletTitle: 'بطاقات الولاء',
-    walletSubtitle: 'أظهر رمز QR عند الكاشير لجمع الطوابع واستلام المكافآت.',
-    walletSignInTitle: 'سجّل دخولك لعرض بطاقات الولاء',
-    walletSignInDesc: 'اجمع الطوابع في مقاهيك المفضلة واحصل على مكافآت مجانية.',
+    walletTitle: 'بطاقة الولاء',
+    walletSubtitle: 'بطاقة واحدة لكل المقاهي — أظهر الرمز عند الكاشير لجمع طوابعك.',
+    walletSignInTitle: 'سجّل دخولك لعرض بطاقة الولاء',
+    walletSignInDesc: 'بطاقة موحّدة، طوابع في كل مقهى، ومكافآت في جيبك.',
     walletCardBadge: 'بطاقة ولاء',
-    walletShowQr: 'أظهر رمز QR للمقهى',
-    walletShowCard: 'عودة للبطاقة',
-    walletQrHint: 'يقرأ المقهى هذا الرمز أو يدخل الرمز تحته لإضافة طوابعك',
+    walletUniversalBadge: 'كل المقاهي',
+    walletShowQr: 'أظهر الرمز للمقهى',
+    walletShowCard: 'تفاصيل البطاقة',
+    walletQrHint: 'أي مقهى يقرأ هذا الرمز أو يدخله لإضافة طوابعك',
     walletQrLabel: 'رمز بطاقة الولاء',
+    walletCode: 'رمز البطاقة',
     walletRedemptions: 'استبدال',
     walletLastUpdate: 'آخر تحديث:',
-    walletMemberSince: 'البطاقة منذ',
+    walletMemberSince: 'عضو منذ',
+    walletBalancesTitle: 'طوابعك في المقاهي',
+    walletEmpty: 'بطاقة الولاء جاهزة',
+    walletAddToPhone: 'أضف لجوالك',
+    walletApple: ' أضف إلى Apple Wallet',
+    walletGoogle: 'حفظ في Google Wallet',
+    walletGuideTitle: 'أضف بطاقتك إلى جوالك',
+    walletGuideSubtitle: 'بطاقة ولاء على بُعد لمسة واحدة.',
+    walletGuideIos:
+      'افتح الصفحة في Safari، اضغط أيقونة المشاركة، ثم اختر «إضافة إلى الشاشة الرئيسية». تفتح بطاقتك ملء الشاشة كبطاقة محفظة.',
+    walletGuideAndroid: 'افتح الصفحة في Chrome، اضغط قائمة ⋮، ثم اختر «إضافة إلى الشاشة الرئيسية».',
+    walletGuideNote:
+      'تظهر أزرار Apple Wallet و Google Wallet تلقائياً بعد ضبط مدير المنصة لشهادات المحافظ.',
+
+    // Cafe signup
+    cafeSignupTitle: 'سجّل مقهاك',
+    cafeSignupDesc: 'أنشئ حساب مقهاك، أضف متجرك، وأطلق برنامج الولاء في خطوة واحدة.',
+    cafeSignupAccountSection: 'حساب المالك',
+    cafeSignupShopSection: 'تفاصيل المقهى',
+    cafeSignupLoyaltySection: 'برنامج الولاء',
+    cafeSignupBtn: 'إنشاء حساب المقهى',
+    cafeSignupFailed: 'فشل تسجيل المقهى',
+    cafeSignupSuccess: 'تم تسجيل المقهى! برنامج الولاء الخاص بك يعمل الآن.',
+    cafeSignupPrompt: 'لديك مقهى؟',
+    cafeSignupLink: 'سجّل مقهاك ←',
+    cafeSignupNav: 'تسجيل مقهى',
+    cafeSignupNote: 'سيظهر مقهاك على الخريطة فوراً، ويمكن لمديري المنصة تعديله أو ضبطه لاحقاً.',
 
     // Cafe console (staff verification)
     cafeConsoleTitle: 'كونسول المقهى',
@@ -554,6 +614,7 @@ export const dictionaries = {
     cafeConsoleAddStamp: 'إضافة طابع',
     cafeConsoleRedeem: 'استبدال المكافأة',
     cafeConsoleRewardReady: 'المكافأة جاهزة — استبدلها وقدّمها للعميل مجاناً',
+    cafeConsoleRewardReadyShort: 'المكافأة جاهزة',
     cafeConsoleEmptyHint: 'أدخل رمز بطاقة عميل لعرض طوابعه ومكافآته.',
     cafeConsoleForbidden: 'حساب مقهى فقط',
     cafeConsoleForbiddenDesc:

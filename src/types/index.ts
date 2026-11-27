@@ -13,25 +13,35 @@ export interface LoyaltyProgramItem {
   active: boolean;
 }
 
-export interface LoyaltyCardItem {
+export interface LoyaltyBalanceItem {
   id: string;
-  userId: string;
+  cardId: string;
   programId: string;
-  code?: string | null;
   stamps: number;
   redemptions: number;
   completedAt?: string | null;
   lastRedeemedAt?: string | null;
+  lastStampedAt?: string | null;
   createdAt: string;
   updatedAt: string;
-  program?: LoyaltyProgramItem & {
-    shop?: {
+  program: LoyaltyProgramItem & {
+    shop: {
       id: string;
       name: string;
       slug: string;
-      imageUrl?: string;
-      city?: string;
+      imageUrl: string;
+      city: string;
     };
+  };
+}
+
+export interface LoyaltyWalletData {
+  user: { id: string; name: string | null; image: string | null };
+  card: {
+    id: string;
+    code: string;
+    createdAt: string;
+    balances: LoyaltyBalanceItem[];
   };
 }
 
@@ -98,7 +108,7 @@ export interface ShopItem {
   isPriorityCity?: boolean;
   distanceKm?: number | null;
   loyaltyProgram?: LoyaltyProgramItem | null;
-  loyaltyCard?: LoyaltyCardItem | null;
+  loyaltyBalance?: LoyaltyBalanceItem | null;
 }
 
 export interface ShopDetail extends ShopItem {
@@ -130,7 +140,7 @@ export interface DashboardData {
   >;
   favorites: ShopItem[];
   ratingDistribution: Array<{ rating: number; count: number }>;
-  loyaltyCards: LoyaltyCardItem[];
+  loyaltyWallet: LoyaltyWalletData;
 }
 
 export interface CommunityMember {

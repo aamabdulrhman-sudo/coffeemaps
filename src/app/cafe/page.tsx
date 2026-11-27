@@ -20,31 +20,38 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { EmptyState } from '@/components/states/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useI18n } from '@/components/language-provider';
 import { cn } from '@/lib/utils';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface LookedUpCard {
-  id: string;
-  code: string;
-  stamps: number;
-  redemptions: number;
-  completedAt?: string | null;
-  updatedAt: string;
+  card: {
+    id: string;
+    code: string;
+    user: { id: string; name: string | null; image: string | null };
+  };
   program: {
     id: string;
     stampsGoal: number;
     reward: string;
     shop: { id: string; name: string; slug: string; city: string };
   };
-  user: { id: string; name: string | null; image: string | null };
+  balance: {
+    id: string;
+    stamps: number;
+    redemptions: number;
+    completedAt?: string | null;
+    lastStampedAt?: string | null;
+    lastRedeemedAt?: string | null;
+    updatedAt: string;
+  };
 }
 
 export default function CafeConsolePage() {
   const { data: session, status } = useSession();
   const { t, formatDate } = useI18n();
   const [code, setCode] = useState('');
-  const [card, setCard] = useState<LookedUpCard | null>(null);
+  const [result, setResult] = useState<LookedUpCard | null>(null);
   const [looking, setLooking] = useState(false);
   const [acting, setActing] = useState(false);
   const [notFound, setNotFound] = useState(false);
@@ -56,7 +63,7 @@ export default function CafeConsolePage() {
     if (!code.trim()) return;
     setLooking(true);
     setNotFound(false);
-    setCard(null);
+    setResult(null);
     try {
       const res = await fetch(`/api/cafe/loyalty?code=${encodeURIComponent(code.trim())}`);
       const data = await res.json();
@@ -64,7 +71,7 @@ export default function CafeConsolePage() {
         if (res.status === 404) setNotFound(true);
         throw new Error(data.error ?? t.adminFailed);
       }
-      setCard(data.card);
+      setResult(data);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t.adminFailed);
     } finally {
@@ -73,17 +80,23 @@ export default function CafeConsolePage() {
   }
 
   async function handleAction(action: 'add' | 'redeem') {
-    if (!card) return;
+    if (!result) return;
     setActing(true);
     try {
       const res = await fetch('/api/cafe/loyalty/action', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: card.code, action }),
+        body: JSON.stringify({
+          code: result.card.code,
+          action,
+          shopId: session?.user?.role === 'ADMIN' ? result.program.shop.id : undefined,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? t.adminFailed);
-      setCard((prev) => (prev ? { ...prev, ...data.card } : prev));
+      setResult((prev) =>
+        prev ? { ...prev, balance: { ...prev.balance, ...data.balance } } : prev
+      );
       toast.success(data.message);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t.adminFailed);
@@ -109,13 +122,19 @@ export default function CafeConsolePage() {
           title={t.cafeConsoleForbidden}
           description={t.cafeConsoleForbiddenDesc}
         />
+        <div className="mt-4 flex justify-center">
+          <Button asChild>
+            <a href="/auth/cafe-signup">{t.cafeSignupNav}</a>
+          </Button>
+        </div>
       </main>
     );
   }
 
-  const goal = card?.program.stampsGoal ?? 8;
-  const progress = card ? Math.min(card.stamps, goal) : 0;
-  const rewardReady = card ? card.stamps >= goal : false;
+  const goal = result?.program.stampsGoal ?? 8;
+  const balance = result?.balance;
+  const progress = balance ? Math.min(balance.stamps, goal) : 0;
+  const rewardReady = balance ? balance.stamps >= goal : false;
 
   return (
     <main className="mx-auto max-w-md space-y-5 px-4 py-8">
@@ -127,7 +146,7 @@ export default function CafeConsolePage() {
         <p className="text-sm text-muted-foreground">{t.cafeConsoleSubtitle}</p>
       </div>
 
-      {/* Card code lookup */}
+      {/* Universal card code lookup */}
       <Card>
         <CardContent className="p-5">
           <form onSubmit={handleLookup} className="space-y-3">
@@ -156,8 +175,8 @@ export default function CafeConsolePage() {
         </CardContent>
       </Card>
 
-      {/* Customer card result */}
-      {card && (
+      {/* Customer result — this cafe's balance only */}
+      {result && balance && (
         <Card
           className={cn(
             'overflow-hidden border-none bg-gradient-to-br text-white shadow-lg',
@@ -167,26 +186,31 @@ export default function CafeConsolePage() {
           )}
         >
           <CardContent className="space-y-4 p-5">
-            {/* Customer info */}
+            {/* Customer identity + QR of the universal code */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Avatar className="h-11 w-11 border-2 border-white/30">
-                  <AvatarImage src={card.user.image ?? undefined} alt={card.user.name ?? ''} />
+                  <AvatarImage
+                    src={result.card.user.image ?? undefined}
+                    alt={result.card.user.name ?? ''}
+                  />
                   <AvatarFallback className="bg-white/15 text-white">
                     <UserRound className="h-5 w-5" />
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="text-sm font-bold">{card.user.name ?? t.profileCoffeeExplorer}</p>
-                  <p className="font-mono text-xs text-white/70">{card.code}</p>
+                  <p className="text-sm font-bold">
+                    {result.card.user.name ?? t.profileCoffeeExplorer}
+                  </p>
+                  <p className="font-mono text-xs text-white/70">{result.card.code}</p>
                 </div>
               </div>
               <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-white p-1.5">
-                <QRCodeSVG value={card.code} size={52} level="M" aria-hidden />
+                <QRCodeSVG value={result.card.code} size={52} level="M" aria-hidden />
               </div>
             </div>
 
-            {/* Stamps */}
+            {/* This cafe's stamps */}
             <div className="flex flex-wrap gap-1.5">
               {Array.from({ length: goal }).map((_, i) => (
                 <span
@@ -195,7 +219,7 @@ export default function CafeConsolePage() {
                     'flex h-8 w-8 items-center justify-center rounded-full border text-xs font-semibold',
                     i < progress
                       ? 'border-amber-300 bg-amber-300 text-coffee-900'
-                      : 'border-white/30 text-white/50'
+                      : 'border-dashed border-white/30 text-white/50'
                   )}
                 >
                   {i < progress ? '★' : i + 1}
@@ -206,25 +230,25 @@ export default function CafeConsolePage() {
             <div className="flex items-center justify-between text-xs text-white/80">
               <span>
                 <span className="font-bold text-white">
-                  {card.stamps}/{goal}
+                  {balance.stamps}/{goal}
                 </span>{' '}
-                {t.dashStamps}
+                {t.dashStamps} — {result.program.shop.name}
               </span>
               <span className="inline-flex items-center gap-1">
                 <Gift className="h-3 w-3" />
-                {card.redemptions} {t.walletRedemptions}
+                {balance.redemptions} {t.walletRedemptions}
               </span>
             </div>
 
             <p className="rounded-xl bg-white/10 px-3 py-2 text-xs">
               <span className="font-semibold">{t.dashReward}: </span>
-              {card.program.reward}
+              {result.program.reward}
             </p>
             <p className="text-[10px] text-white/50">
-              {t.walletLastUpdate}: {formatDate(card.updatedAt)}
+              {t.walletLastUpdate}: {formatDate(balance.updatedAt)}
             </p>
 
-            {/* Actions */}
+            {/* Actions — affect ONLY this cafe's balance */}
             <div className="grid grid-cols-2 gap-2">
               <Button
                 onClick={() => handleAction('add')}
@@ -253,7 +277,7 @@ export default function CafeConsolePage() {
         </Card>
       )}
 
-      {!card && !notFound && (
+      {!result && !notFound && (
         <div className="rounded-2xl border border-dashed p-6 text-center">
           <Coffee className="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" />
           <p className="text-sm text-muted-foreground">{t.cafeConsoleEmptyHint}</p>

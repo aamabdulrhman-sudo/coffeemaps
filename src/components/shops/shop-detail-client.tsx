@@ -25,13 +25,13 @@ function LoyaltyProgramCard({ shopId }: { shopId: string }) {
   const { data, refetch } = useShopDetail(shopId);
 
   const program = data?.shop?.loyaltyProgram;
-  const card = data?.shop?.loyaltyCard;
+  const balance = data?.shop?.loyaltyBalance;
 
   if (!program || !program.active) return null;
 
   const goal = program.stampsGoal;
-  const progress = card ? Math.min(card.stamps, goal) : 0;
-  const completed = Boolean(card?.completedAt);
+  const progress = balance ? Math.min(balance.stamps, goal) : 0;
+  const completed = Boolean(balance?.completedAt);
 
   async function handleCheckIn() {
     try {

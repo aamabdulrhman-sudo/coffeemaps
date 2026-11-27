@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { syncUserBadges } from '@/lib/badges';
+import { ensureLoyaltyCard } from '@/lib/loyalty';
 
 export async function GET() {
   try {
@@ -12,7 +13,7 @@ export async function GET() {
 
     const userId = session.user.id;
 
-    const [favorites, reviews, photoCount, badges, loyaltyCards, followCounts] = await Promise.all([
+    const [favorites, reviews, photoCount, badges, walletCard, followCounts] = await Promise.all([
       prisma.favorite.findMany({
         where: { userId },
         include: { shop: { include: { tags: true } } },
@@ -33,16 +34,22 @@ export async function GET() {
       }),
       prisma.photo.count({ where: { userId } }),
       syncUserBadges(userId),
-      prisma.loyaltyCard.findMany({
+      prisma.loyaltyCard.findUnique({
         where: { userId },
         include: {
-          program: {
+          balances: {
             include: {
-              shop: { select: { id: true, name: true, slug: true, imageUrl: true, city: true } },
+              program: {
+                include: {
+                  shop: {
+                    select: { id: true, name: true, slug: true, imageUrl: true, city: true },
+                  },
+                },
+              },
             },
+            orderBy: { updatedAt: 'desc' },
           },
         },
-        orderBy: { updatedAt: 'desc' },
       }),
       prisma.user.findUnique({
         where: { id: userId },
@@ -51,6 +58,19 @@ export async function GET() {
         },
       }),
     ]);
+
+    const wallet = walletCard ?? (await ensureLoyaltyCard(userId));
+    const balances = await prisma.loyaltyBalance.findMany({
+      where: { cardId: wallet.id },
+      include: {
+        program: {
+          include: {
+            shop: { select: { id: true, name: true, slug: true, imageUrl: true, city: true } },
+          },
+        },
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
 
     const citySet = new Set<string>();
     favorites.forEach((f) => citySet.add(f.shop.city));
@@ -80,7 +100,15 @@ export async function GET() {
       recentReviews: reviews.slice(0, 6),
       favorites: favorites.slice(0, 6).map((f) => ({ ...f.shop, isFavorited: true })),
       ratingDistribution,
-      loyaltyCards,
+      loyaltyWallet: {
+        user: { id: userId, name: session.user.name, image: session.user.image },
+        card: {
+          id: wallet.id,
+          code: wallet.code,
+          createdAt: wallet.createdAt,
+          balances,
+        },
+      },
     });
   } catch (error) {
     console.error('GET /api/dashboard error:', error);

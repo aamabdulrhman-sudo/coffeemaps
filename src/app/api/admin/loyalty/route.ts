@@ -11,7 +11,7 @@ export async function GET() {
     const programs = await prisma.loyaltyProgram.findMany({
       include: {
         shop: { select: { id: true, name: true, slug: true, city: true } },
-        _count: { select: { cards: true } },
+        _count: { select: { balances: true } },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
       update: data,
       include: {
         shop: { select: { id: true, name: true, slug: true, city: true } },
-        _count: { select: { cards: true } },
+        _count: { select: { balances: true } },
       },
     });
 

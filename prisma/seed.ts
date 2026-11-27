@@ -14,17 +14,23 @@ function generateCardCode(): string {
 }
 
 async function main() {
-  // Backfill: generate codes for loyalty cards created before the QR wallet update.
-  // Runs before the seeding guard so it always applies on redeploy.
-  const cardsWithoutCode = await prisma.loyaltyCard.findMany({ where: { code: null } });
-  for (const card of cardsWithoutCode) {
-    await prisma.loyaltyCard.update({
-      where: { id: card.id },
-      data: { code: generateCardCode() },
-    });
+  // Ensure every user has ONE universal loyalty card with a unique code
+  // (runs before the seeding guard so it always applies on redeploy).
+  const usersWithoutCard = await prisma.user.findMany({
+    where: { loyaltyCard: null },
+    select: { id: true },
+  });
+  for (const u of usersWithoutCard) {
+    let code = generateCardCode();
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const clash = await prisma.loyaltyCard.findUnique({ where: { code } });
+      if (!clash) break;
+      code = generateCardCode();
+    }
+    await prisma.loyaltyCard.create({ data: { userId: u.id, code } });
   }
-  if (cardsWithoutCode.length > 0) {
-    console.log(`Backfilled ${cardsWithoutCode.length} loyalty card code(s).`);
+  if (usersWithoutCard.length > 0) {
+    console.log(`Created ${usersWithoutCard.length} universal loyalty card(s).`);
   }
 
   const existingShopsCount = await prisma.shop.count();

@@ -87,7 +87,7 @@ interface LoyaltyProgram {
   reward: string;
   active: boolean;
   shop: { id: string; name: string; slug: string; city: string };
-  _count: { cards: number };
+  _count: { balances: number };
 }
 
 /* ---------------- Page ---------------- */
@@ -981,8 +981,8 @@ function LoyaltyAdmin() {
                     {program.shop.name}
                   </Link>
                   <p className="text-xs text-muted-foreground">
-                    {program.stampsGoal} {t.dashStamps} → {program.reward} • {program._count.cards}{' '}
-                    {t.dashLoyalty}
+                    {program.stampsGoal} {t.dashStamps} → {program.reward} •{' '}
+                    {program._count.balances} {t.dashLoyalty}
                   </p>
                 </div>
                 <Button

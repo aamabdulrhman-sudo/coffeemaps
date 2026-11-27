@@ -51,23 +51,23 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
       isFavorited = Boolean(fav);
     }
 
-    let loyaltyCard = null;
+    let loyaltyBalance = null;
     if (shop.loyaltyProgram && session?.user?.id) {
-      loyaltyCard = await prisma.loyaltyCard.findUnique({
-        where: {
-          userId_programId: {
-            userId: session.user.id,
-            programId: shop.loyaltyProgram.id,
-          },
-        },
+      const card = await prisma.loyaltyCard.findUnique({
+        where: { userId: session.user.id },
       });
+      if (card) {
+        loyaltyBalance = await prisma.loyaltyBalance.findUnique({
+          where: { cardId_programId: { cardId: card.id, programId: shop.loyaltyProgram.id } },
+        });
+      }
     }
 
     return NextResponse.json({
       shop: {
         ...shop,
         isFavorited,
-        loyaltyCard,
+        loyaltyBalance,
       },
     });
   } catch (error) {

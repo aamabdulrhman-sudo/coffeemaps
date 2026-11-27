@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { normalizeCardCode } from '@/lib/loyalty';
+import { ensureBalance, normalizeCardCode } from '@/lib/loyalty';
 
 /**
- * Cafe console: look up a customer loyalty card by its code.
- * Accessible to the shop's staff account (role=SHOP bound to that shop) or platform admins.
+ * Cafe console: scan/enter the customer's UNIVERSAL card code → identify the customer,
+ * then show ONLY this cafe's stamp balance for that customer. Other cafes' balances
+ * are never exposed. Accessible to the cafe's staff account (role=SHOP) or admins.
  */
 export async function GET(request: Request) {
   try {
@@ -33,22 +34,7 @@ export async function GET(request: Request) {
     const card = await prisma.loyaltyCard.findUnique({
       where: { code },
       include: {
-        program: {
-          include: {
-            shop: {
-              select: {
-                id: true,
-                name: true,
-                slug: true,
-                imageUrl: true,
-                city: true,
-              },
-            },
-          },
-        },
-        user: {
-          select: { id: true, name: true, image: true },
-        },
+        user: { select: { id: true, name: true, image: true } },
       },
     });
 
@@ -56,21 +42,43 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Card not found' }, { status: 404 });
     }
 
-    if (staff.role === 'SHOP' && staff.shopId !== card.program.shopId) {
-      return NextResponse.json({ error: 'This card belongs to another cafe' }, { status: 403 });
+    // Resolve this cafe's loyalty program
+    const shopId =
+      staff.role === 'SHOP' ? staff.shopId : (searchParams.get('shopId') ?? staff.shopId);
+    if (!shopId) {
+      return NextResponse.json({ error: 'This cafe is not linked to a shop' }, { status: 400 });
     }
+
+    const program = await prisma.loyaltyProgram.findUnique({
+      where: { shopId },
+      include: { shop: { select: { id: true, name: true, slug: true, city: true } } },
+    });
+
+    if (!program || !program.active) {
+      return NextResponse.json(
+        { error: 'Your cafe has no active loyalty program yet' },
+        { status: 404 }
+      );
+    }
+
+    // Per-cafe balance only — zero if this customer never visited this cafe
+    const balance = await ensureBalance(card.id, program.id);
 
     return NextResponse.json({
       card: {
         id: card.id,
         code: card.code,
-        stamps: card.stamps,
-        redemptions: card.redemptions,
-        completedAt: card.completedAt,
-        lastRedeemedAt: card.lastRedeemedAt,
-        updatedAt: card.updatedAt,
-        program: card.program,
         user: card.user,
+      },
+      program,
+      balance: {
+        id: balance.id,
+        stamps: balance.stamps,
+        redemptions: balance.redemptions,
+        completedAt: balance.completedAt,
+        lastRedeemedAt: balance.lastRedeemedAt,
+        lastStampedAt: balance.lastStampedAt,
+        updatedAt: balance.updatedAt,
       },
     });
   } catch (error) {

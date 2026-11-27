@@ -84,7 +84,7 @@ export default function DashboardPage() {
   ];
 
   const maxDistCount = Math.max(...data.ratingDistribution.map((d) => d.count), 1);
-  const loyaltyCards = data.loyaltyCards ?? [];
+  const wallet = data.loyaltyWallet;
 
   return (
     <main className="mx-auto max-w-6xl space-y-8 px-4 py-8 sm:px-6">
@@ -210,20 +210,22 @@ export default function DashboardPage() {
             </Link>
           </Button>
         </div>
-        {loyaltyCards.length === 0 ? (
+        {!wallet || wallet.card.balances.length === 0 ? (
           <EmptyState icon={Gift} title={t.dashLoyaltyEmpty} description={t.dashLoyaltyEmptyDesc} />
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {loyaltyCards.map((card) => {
-              const program = card.program;
-              const goal = program?.stampsGoal ?? 8;
-              const progress = Math.min(card.stamps, goal);
-              const completed = Boolean(card.completedAt);
+            {wallet.card.balances.map((balance) => {
+              const goal = balance.program.stampsGoal;
+              const progress = Math.min(balance.stamps, goal);
+              const rewardReady = balance.stamps >= goal;
               return (
-                <Card key={card.id} className={cn(completed && 'border-primary/50 bg-primary/5')}>
+                <Card
+                  key={balance.id}
+                  className={cn(rewardReady && 'border-primary/50 bg-primary/5')}
+                >
                   <CardHeader className="pb-2">
                     <CardTitle className="line-clamp-1 text-sm font-semibold">
-                      {program?.shop?.name}
+                      {balance.program.shop.name}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
@@ -244,24 +246,22 @@ export default function DashboardPage() {
                     </div>
                     <p className="text-xs text-muted-foreground">
                       <span className="font-semibold text-foreground">
-                        {card.stamps}/{goal}
+                        {balance.stamps}/{goal}
                       </span>{' '}
                       {t.dashStamps}
                     </p>
-                    {program?.reward && (
+                    {balance.program.reward && (
                       <p className="rounded-lg bg-muted/60 px-2.5 py-1.5 text-xs">
                         <span className="font-semibold">{t.dashReward}: </span>
-                        {program.reward}
+                        {balance.program.reward}
                       </p>
                     )}
-                    {completed && (
+                    {rewardReady && (
                       <p className="text-xs font-semibold text-primary">🎁 {t.dashCompleted}</p>
                     )}
-                    {program?.shop?.slug && (
-                      <Button variant="outline" size="sm" className="w-full" asChild>
-                        <Link href={`/shops/${program.shop.slug}`}>{t.loyaltyCheckIn}</Link>
-                      </Button>
-                    )}
+                    <Button variant="outline" size="sm" className="w-full" asChild>
+                      <Link href={`/shops/${balance.program.shop.slug}`}>{t.loyaltyCheckIn}</Link>
+                    </Button>
                   </CardContent>
                 </Card>
               );

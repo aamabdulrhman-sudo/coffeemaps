@@ -2,11 +2,12 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { loyaltyCheckInSchema } from '@/lib/validations';
-import { ensureLoyaltyCard } from '@/lib/loyalty';
+import { ensureBalance, ensureLoyaltyCard } from '@/lib/loyalty';
 
 /**
- * Check in at a coffee shop with an active loyalty program → collect one stamp.
- * One check-in per shop per day. Completing the goal unlocks the reward.
+ * Self check-in at a coffee shop with an active loyalty program → one stamp
+ * on the customer's universal card balance for THAT shop (other cafes unaffected).
+ * One self check-in per shop per day.
  */
 export async function POST(request: Request) {
   try {
@@ -37,47 +38,49 @@ export async function POST(request: Request) {
     }
 
     const userId = session.user.id;
-    const card = await ensureLoyaltyCard(userId, program.id);
+    const card = await ensureLoyaltyCard(userId);
+    const balance = await ensureBalance(card.id, program.id);
 
     const now = new Date();
-    const lastCheckIn = card.updatedAt;
+    const lastStamp = balance.lastStampedAt;
     const sameDay =
-      lastCheckIn &&
-      lastCheckIn.getFullYear() === now.getFullYear() &&
-      lastCheckIn.getMonth() === now.getMonth() &&
-      lastCheckIn.getDate() === now.getDate();
+      lastStamp &&
+      lastStamp.getFullYear() === now.getFullYear() &&
+      lastStamp.getMonth() === now.getMonth() &&
+      lastStamp.getDate() === now.getDate();
 
-    if (card.completedAt) {
+    if (balance.completedAt) {
       return NextResponse.json({
-        card,
+        balance,
         program,
         alreadyCompleted: true,
-        message: 'Reward already unlocked for this card',
+        message: 'Reward already unlocked for this cafe',
       });
     }
 
     if (sameDay) {
       return NextResponse.json({
-        card,
+        balance,
         program,
         alreadyCheckedInToday: true,
         message: 'You already checked in today — come back tomorrow for another stamp',
       });
     }
 
-    const newStamps = Math.min(card.stamps + 1, program.stampsGoal);
+    const newStamps = Math.min(balance.stamps + 1, program.stampsGoal);
     const completed = newStamps >= program.stampsGoal;
 
-    const updatedCard = await prisma.loyaltyCard.update({
-      where: { id: card.id },
+    const updatedBalance = await prisma.loyaltyBalance.update({
+      where: { id: balance.id },
       data: {
         stamps: newStamps,
         completedAt: completed ? new Date() : null,
+        lastStampedAt: now,
       },
     });
 
     return NextResponse.json({
-      card: updatedCard,
+      balance: updatedBalance,
       program,
       stamped: true,
       completed,

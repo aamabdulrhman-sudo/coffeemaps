@@ -31,7 +31,7 @@ model User {
   badges        UserBadge[]
   following     Follow[]        @relation("Follower")
   followers     Follow[]        @relation("Following")
-  loyaltyCards  LoyaltyCard[]
+  loyaltyCard   LoyaltyCard?
   operatedShop  Shop?           @relation("OperatedBy", fields: [shopId], references: [id], onDelete: SetNull)
 }
 
@@ -225,29 +225,43 @@ model LoyaltyProgram {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  shop  Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  cards LoyaltyCard[]
+  shop     Shop             @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  balances LoyaltyBalance[]
 
   @@index([active])
 }
 
+// One universal card per customer — its code/QR identifies the customer at ANY cafe.
 model LoyaltyCard {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  // Short unique code printed in the customer's QR — the cafe enters it to verify
+  code      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balances LoyaltyBalance[]
+
+  @@index([userId])
+}
+
+// Per-cafe stamp balance on the customer's universal card (no overlap between cafes)
+model LoyaltyBalance {
   id             String    @id @default(cuid())
-  userId         String
+  cardId         String
   programId      String
-  // Short unique code printed in the customer's QR card — the cafe enters it to verify
-  code           String?   @unique
   stamps         Int       @default(0)
   redemptions    Int       @default(0)
   completedAt    DateTime?
   lastRedeemedAt DateTime?
+  lastStampedAt  DateTime?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
-  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  card    LoyaltyCard    @relation(fields: [cardId], references: [id], onDelete: Cascade)
   program LoyaltyProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, programId])
-  @@index([userId])
+  @@unique([cardId, programId])
   @@index([programId])
 }

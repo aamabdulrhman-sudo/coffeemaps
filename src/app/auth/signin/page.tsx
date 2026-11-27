@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
-import { Coffee } from 'lucide-react';
+import { Coffee, Store } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -103,6 +103,16 @@ export default function SignInPage() {
               {t.authCreateAccount}
             </Link>
           </p>
+
+          <div className="rounded-xl border border-dashed p-3 text-center">
+            <p className="text-xs text-muted-foreground">
+              <Store className="mr-1 inline h-3.5 w-3.5" />
+              {t.cafeSignupPrompt}{' '}
+              <Link href="/auth/cafe-signup" className="font-semibold text-primary hover:underline">
+                {t.cafeSignupLink}
+              </Link>
+            </p>
+          </div>
         </CardContent>
       </Card>
     </main>
