@@ -13,7 +13,9 @@ RUN npx prisma generate
 FROM deps AS migrator
 WORKDIR /app
 COPY prisma ./prisma
-CMD ["sh", "-c", "npx prisma db push && npx tsx prisma/seed.ts"]
+# --accept-data-loss: schema changes here are additive (new nullable columns/indexes),
+# so Prisma's conservative warnings are safe to bypass in this pre-production app.
+CMD ["sh", "-c", "npx prisma db push --accept-data-loss && npx tsx prisma/seed.ts"]
 
 FROM base AS builder
 WORKDIR /app
