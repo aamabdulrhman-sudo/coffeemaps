@@ -73,17 +73,25 @@ export const profileUpdateSchema = z.object({
   image: z.string().url('Must be a valid URL').or(z.literal('')).optional().nullable(),
 });
 
-export const adBannerCreateSchema = z.object({
+const adBannerBaseSchema = z.object({
   title: z.string().trim().min(2).max(120),
   subtitle: z.string().trim().max(200).optional().nullable(),
-  imageUrl: z.string().url('Must be a valid image URL'),
+  imageUrl: z.string().url('Must be a valid image URL').optional().nullable().or(z.literal('')),
   linkUrl: z.string().url('Must be a valid URL').optional().nullable().or(z.literal('')),
   shopId: z.string().optional().nullable(),
   active: z.boolean().optional().default(true),
   priority: z.coerce.number().int().min(0).max(1000).optional().default(0),
 });
 
-export const adBannerUpdateSchema = adBannerCreateSchema.partial();
+export const adBannerCreateSchema = adBannerBaseSchema.refine(
+  (data) => Boolean(data.shopId) || Boolean(data.imageUrl),
+  {
+    message: 'Select a featured coffee shop or provide a banner image',
+    path: ['shopId'],
+  }
+);
+
+export const adBannerUpdateSchema = adBannerBaseSchema.partial();
 
 export const loyaltyProgramSchema = z.object({
   shopId: z.string().min(1, 'Shop ID is required'),

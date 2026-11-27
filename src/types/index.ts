@@ -151,11 +151,12 @@ export interface AdBannerItem {
   id: string;
   title: string;
   subtitle?: string | null;
-  imageUrl: string;
+  imageUrl?: string | null;
   linkUrl?: string | null;
   shopId?: string | null;
   active: boolean;
   priority: number;
+  clicks: number;
   shop?: {
     id: string;
     name: string;

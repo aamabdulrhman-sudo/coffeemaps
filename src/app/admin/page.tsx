@@ -6,8 +6,10 @@ import { useSession } from 'next-auth/react';
 import {
   Coffee,
   Gift,
+  ImagePlus,
   Layers,
   Megaphone,
+  MousePointerClick,
   Pencil,
   Plus,
   ShieldCheck,
@@ -55,11 +57,12 @@ interface AdminBanner {
   id: string;
   title: string;
   subtitle?: string | null;
-  imageUrl: string;
+  imageUrl?: string | null;
   linkUrl?: string | null;
   shopId?: string | null;
   active: boolean;
   priority: number;
+  clicks: number;
   shop?: { id: string; name: string; slug: string } | null;
 }
 
@@ -503,6 +506,7 @@ function BannersAdmin() {
   const [shops, setShops] = useState<AdminShop[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
     title: '',
@@ -533,6 +537,43 @@ function BannersAdmin() {
     void loadData();
   }, []);
 
+  /** Selecting a coffee shop auto-fills the banner data from the shop. */
+  function handleShopSelect(shopId: string) {
+    if (shopId === 'none') {
+      setForm((prev) => ({ ...prev, shopId }));
+      return;
+    }
+    const shop = shops.find((s) => s.id === shopId);
+    if (!shop) return;
+    setForm((prev) => ({
+      ...prev,
+      shopId,
+      title: prev.shopId === 'none' && !prev.title ? shop.name : prev.title,
+      subtitle: shop.city,
+      imageUrl: prev.imageUrl || shop.imageUrl,
+    }));
+  }
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/upload', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? t.adminFailed);
+      setForm((prev) => ({ ...prev, imageUrl: data.url }));
+      toast.success(t.reviewPhotoUploaded);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t.adminFailed);
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  }
+
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
@@ -543,7 +584,7 @@ function BannersAdmin() {
         body: JSON.stringify({
           title: form.title,
           subtitle: form.subtitle || null,
-          imageUrl: form.imageUrl,
+          imageUrl: form.imageUrl || null,
           linkUrl: form.linkUrl || null,
           shopId: form.shopId === 'none' ? null : form.shopId,
           priority: Number(form.priority) || 0,
@@ -613,6 +654,25 @@ function BannersAdmin() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleCreate} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {/* Featured shop — auto-fills banner data */}
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label>{t.adminBannerShop}</Label>
+                <Select value={form.shopId} onValueChange={handleShopSelect}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t.adminShopName} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">—</SelectItem>
+                    {shops.map((shop) => (
+                      <SelectItem key={shop.id} value={shop.id}>
+                        {shop.name} — {shop.city}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">{t.adminBannerShopHint}</p>
+              </div>
+
               <div className="space-y-1.5">
                 <Label>{t.adminBannerTitle}</Label>
                 <Input
@@ -628,32 +688,51 @@ function BannersAdmin() {
                   onChange={(e) => setForm({ ...form, subtitle: e.target.value })}
                 />
               </div>
+
+              {/* Banner image: upload from device or paste URL (optional when a shop is selected) */}
               <div className="space-y-1.5 sm:col-span-2">
                 <Label>{t.adminBannerImage}</Label>
+                <div className="flex flex-wrap items-center gap-3">
+                  {form.imageUrl && (
+                    <div className="relative h-20 w-36 overflow-hidden rounded-xl border">
+                      <img
+                        src={form.imageUrl}
+                        alt="Banner preview"
+                        className="h-full w-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        aria-label={t.reviewRemovePhoto}
+                        onClick={() => setForm((prev) => ({ ...prev, imageUrl: '' }))}
+                        className="absolute right-1 top-1 rounded-full bg-black/70 p-1 text-white"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  )}
+                  <label className="flex h-11 cursor-pointer items-center gap-2 rounded-xl border border-dashed px-4 text-xs font-medium text-muted-foreground hover:border-primary hover:text-primary">
+                    <ImagePlus className="h-4 w-4" />
+                    {uploading ? t.reviewUploading : t.reviewAddPhoto}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageUpload}
+                      disabled={uploading}
+                    />
+                  </label>
+                </div>
                 <Input
                   type="url"
                   value={form.imageUrl}
                   onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
-                  placeholder="https://..."
-                  required
+                  placeholder={t.adminBannerImageOptional}
                 />
+                {form.shopId === 'none' && !form.imageUrl && (
+                  <p className="text-xs text-destructive">{t.adminBannerImageRequired}</p>
+                )}
               </div>
-              <div className="space-y-1.5">
-                <Label>{t.adminBannerShop}</Label>
-                <Select value={form.shopId} onValueChange={(v) => setForm({ ...form, shopId: v })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">—</SelectItem>
-                    {shops.map((shop) => (
-                      <SelectItem key={shop.id} value={shop.id}>
-                        {shop.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+
               <div className="space-y-1.5">
                 <Label>{t.adminBannerPriority}</Label>
                 <Input
@@ -662,7 +741,7 @@ function BannersAdmin() {
                   onChange={(e) => setForm({ ...form, priority: e.target.value })}
                 />
               </div>
-              <div className="space-y-1.5 sm:col-span-2">
+              <div className="space-y-1.5">
                 <Label>{t.adminBannerLink}</Label>
                 <Input
                   type="url"
@@ -671,7 +750,10 @@ function BannersAdmin() {
                 />
               </div>
               <div className="flex gap-2 sm:col-span-2">
-                <Button type="submit" disabled={saving}>
+                <Button
+                  type="submit"
+                  disabled={saving || uploading || (form.shopId === 'none' && !form.imageUrl)}
+                >
                   {saving ? t.saving : t.save}
                 </Button>
                 <Button type="button" variant="ghost" onClick={() => setShowForm(false)}>
@@ -696,11 +778,17 @@ function BannersAdmin() {
           {banners.map((banner) => (
             <Card key={banner.id} className="py-3">
               <CardContent className="flex flex-wrap items-center gap-3 px-4">
-                <img
-                  src={banner.imageUrl}
-                  alt={banner.title}
-                  className="h-14 w-24 shrink-0 rounded-xl border object-cover"
-                />
+                {banner.imageUrl ? (
+                  <img
+                    src={banner.imageUrl}
+                    alt={banner.title}
+                    className="h-14 w-24 shrink-0 rounded-xl border object-cover"
+                  />
+                ) : (
+                  <div className="flex h-14 w-24 shrink-0 items-center justify-center rounded-xl border bg-muted text-muted-foreground">
+                    <Megaphone className="h-5 w-5" />
+                  </div>
+                )}
                 <div className="min-w-0 flex-1">
                   <p className="line-clamp-1 font-semibold">{banner.title}</p>
                   {banner.subtitle && (
@@ -715,6 +803,11 @@ function BannersAdmin() {
                     </Link>
                   )}
                 </div>
+                {/* Click statistics */}
+                <Badge variant="accent" className="gap-1">
+                  <MousePointerClick className="h-3 w-3" />
+                  {banner.clicks} {t.adminBannerClicks}
+                </Badge>
                 <Badge variant={banner.active ? 'default' : 'outline'}>
                   {t.adminBannerActive}: {banner.active ? '✓' : '✗'}
                 </Badge>

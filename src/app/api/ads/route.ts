@@ -22,7 +22,12 @@ export async function GET() {
       take: 8,
     });
 
-    return NextResponse.json({ banners });
+    return NextResponse.json({
+      banners: banners.map((b) => ({
+        ...b,
+        imageUrl: b.imageUrl ?? b.shop?.imageUrl ?? null,
+      })),
+    });
   } catch (error) {
     console.error('GET /api/ads error:', error);
     return NextResponse.json({ error: 'Failed to load ad banners' }, { status: 500 });

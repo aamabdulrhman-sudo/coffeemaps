@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { ChevronLeft, ChevronRight, Megaphone, Star } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ChevronLeft, ChevronRight, MapPin, Megaphone, Star } from 'lucide-react';
 import { useAdBanners } from '@/hooks/use-coffeemap';
 import { cn, formatRating } from '@/lib/utils';
 
 export function AdBanners() {
+  const router = useRouter();
   const { data } = useAdBanners();
   const banners = data?.banners ?? [];
   const [index, setIndex] = useState(0);
@@ -23,6 +24,18 @@ export function AdBanners() {
   if (banners.length === 0) return null;
 
   const banner = banners[Math.min(index, banners.length - 1)];
+  const image = banner.imageUrl || banner.shop?.imageUrl;
+  const href = banner.shop
+    ? `/shops/${banner.shop.slug}`
+    : banner.linkUrl && banner.linkUrl.startsWith('/')
+      ? banner.linkUrl
+      : banner.linkUrl || '/';
+
+  function trackClick() {
+    if (!banner.shop) return;
+    // fire-and-forget click tracking, then navigate
+    fetch(`/api/ads/${banner.id}/click`, { method: 'POST', keepalive: true }).catch(() => {});
+  }
 
   return (
     <div
@@ -31,50 +44,61 @@ export function AdBanners() {
       onMouseLeave={() => setPaused(false)}
       aria-label="Featured coffee shops"
     >
-      <div className="flex items-stretch">
-        {/* Featured shop image */}
-        {banner.shop && (
-          <Link
-            href={`/shops/${banner.shop.slug}`}
-            className="relative hidden w-1/3 shrink-0 sm:block"
-          >
-            <img
-              src={banner.shop.imageUrl}
-              alt={banner.shop.name}
-              className="h-full w-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-            <div className="absolute bottom-3 left-3 right-3 text-white">
-              <p className="line-clamp-1 text-sm font-bold">{banner.shop.name}</p>
-              <p className="flex items-center gap-1 text-xs text-white/90">
-                <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                {formatRating(banner.shop.averageRating)} ({banner.shop.reviewCount})
-              </p>
-            </div>
-          </Link>
+      {/* Clickable banner → shop page */}
+      <button
+        type="button"
+        onClick={() => {
+          trackClick();
+          if (href.startsWith('/')) {
+            router.push(href);
+          } else {
+            window.open(href, '_blank', 'noopener');
+          }
+        }}
+        className="group relative block h-44 w-full text-left sm:h-48 lg:h-52"
+      >
+        {image ? (
+          <img
+            src={image}
+            alt={banner.shop?.name ?? banner.title}
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-coffee-100 to-amber-100 dark:from-coffee-950 dark:to-amber-950" />
         )}
 
-        {/* Ad copy */}
-        <div className="relative flex flex-1 flex-col justify-center gap-1 p-5">
-          <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-primary">
-            <Megaphone className="h-3 w-3" />
-            Ad
-          </span>
-          <Link
-            href={banner.linkUrl || (banner.shop ? `/shops/${banner.shop.slug}` : '/community')}
-            className="group"
-          >
-            <h3 className="line-clamp-1 text-base font-bold tracking-tight group-hover:text-primary sm:text-lg">
-              {banner.title}
-            </h3>
-            {banner.subtitle && (
-              <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground sm:text-sm">
-                {banner.subtitle}
-              </p>
-            )}
-          </Link>
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/10" />
+
+        {/* Ad badge */}
+        <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-md">
+          <Megaphone className="h-3 w-3" />
+          Ad
+        </span>
+
+        {/* Shop name + info overlaid at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+          <h3 className="line-clamp-1 text-lg font-bold tracking-tight sm:text-xl">
+            {banner.shop?.name ?? banner.title}
+          </h3>
+          {banner.shop ? (
+            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-white/85">
+              <span className="inline-flex items-center gap-1">
+                <MapPin className="h-3 w-3" />
+                {banner.shop.city}
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                {formatRating(banner.shop.averageRating)} ({banner.shop.reviewCount})
+              </span>
+            </div>
+          ) : (
+            banner.subtitle && (
+              <p className="mt-0.5 line-clamp-1 text-xs text-white/85">{banner.subtitle}</p>
+            )
+          )}
         </div>
-      </div>
+      </button>
 
       {/* Carousel controls */}
       {banners.length > 1 && (
@@ -82,29 +106,38 @@ export function AdBanners() {
           <button
             type="button"
             aria-label="Previous banner"
-            onClick={() => setIndex((prev) => (prev - 1 + banners.length) % banners.length)}
-            className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/40 p-1 text-white opacity-0 transition hover:bg-black/60 focus:opacity-100 group-hover:opacity-100 md:opacity-60"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIndex((prev) => (prev - 1 + banners.length) % banners.length);
+            }}
+            className="absolute left-1.5 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/45 p-1.5 text-white backdrop-blur-md transition hover:bg-black/70"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
           <button
             type="button"
             aria-label="Next banner"
-            onClick={() => setIndex((prev) => (prev + 1) % banners.length)}
-            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/40 p-1 text-white opacity-0 transition hover:bg-black/60 focus:opacity-100 md:opacity-60"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIndex((prev) => (prev + 1) % banners.length);
+            }}
+            className="absolute right-1.5 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/45 p-1.5 text-white backdrop-blur-md transition hover:bg-black/70"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
-          <div className="absolute bottom-2 right-3 flex gap-1">
+          <div className="absolute bottom-2 right-3 z-10 flex gap-1">
             {banners.map((_, i) => (
               <button
                 key={i}
                 type="button"
                 aria-label={`Go to banner ${i + 1}`}
-                onClick={() => setIndex(i)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIndex(i);
+                }}
                 className={cn(
                   'h-1.5 rounded-full transition-all',
-                  i === index ? 'w-4 bg-primary' : 'w-1.5 bg-muted-foreground/40'
+                  i === index ? 'w-4 bg-white' : 'w-1.5 bg-white/40'
                 )}
               />
             ))}
